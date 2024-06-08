@@ -1,10 +1,13 @@
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
+from typing import Optional
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import APIRouter
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 router = APIRouter()
 
@@ -12,16 +15,10 @@ SECRET_KEY = "83daa0256a2289b0fb23693bf1f6034d44396675749244721a2b20e896e11662"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-
-db = {
-    "vishal": {
-        "username": "vishal",
-        "full_name": "Vishal amfoss",
-        "email": "vis@gmail.com",
-        "hashed_password": "$2b$12$HxWHkvMuL7WrZad6lcCfluNFj1/Zp63lvP5aUrKlSTYtoFzPXHOtu",
-        "disabled": False
-    }
-}
+# Setup MongoDB client
+client = MongoClient("mongodb://localhost:27017/")
+db = client["mydatabase"]
+users_collection = db["users"]
 
 
 class Token(BaseModel):
@@ -43,15 +40,21 @@ class User(BaseModel):
 class UserInDB(User):
     hashed_password: str
 
+class UserData(BaseModel):
+    _id : ObjectId
+    username: str
+    email: Optional[str] = None 
+    full_name: Optional[str] = None
+    disabled:  Optional[bool] = None
+    hashed_password: str
 
-class UserCreate(User):
+class UserCreate(BaseModel):
+    username: str
     password: str
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-# app = FastAPI()
 
 
 def verify_password(plain_password, hashed_password):
@@ -62,14 +65,18 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-def get_user(db, username: str):
-    if username in db:
-        user_data = db[username]
-        return UserInDB(**user_data)
+def get_user(username: str):
+    user = users_collection.find_one({"username": username})
+
+    print("-")
+    print(user)
+    print("-")
+    if user:
+        return UserData(**user)
 
 
-def authenticate_user(db, username: str, password: str):
-    user = get_user(db, username)
+def authenticate_user(username: str, password: str):
+    user = get_user(username)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -103,7 +110,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credential_exception
 
-    user = get_user(db, username=token_data.username)
+    user = get_user(username=token_data.username)
     if user is None:
         raise credential_exception
 
@@ -119,7 +126,7 @@ async def get_current_active_user(current_user: UserInDB = Depends(get_current_u
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Incorrect username or password", headers={"WWW-Authenticate": "Bearer"})
@@ -131,14 +138,14 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 @router.post("/register", response_model=User)
 async def create_user(user: UserCreate):
-    if user.username in db:
+    if get_user(user.username):
         raise HTTPException(status_code=400, detail="Username already exists")
 
     hashed_password = get_password_hash(user.password)
-    user_in_db = UserInDB(**user.dict(), hashed_password=hashed_password)
-    db[user.username] = user_in_db.dict()
 
-    # print(db)
+    user_in_db = UserInDB(username=user.username, hashed_password=hashed_password)
+    users_collection.insert_one(user_in_db.dict())
+
     return user_in_db
 
 
