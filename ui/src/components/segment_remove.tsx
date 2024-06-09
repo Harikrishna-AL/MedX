@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import React, { useState, ChangeEvent } from 'react';
+import { UploadIcon } from '@heroicons/react/outline';
 
 export function InteractiveSegment() {
   const [confidence, setConfidence] = useState(0.92);
@@ -19,55 +20,117 @@ export function InteractiveSegment() {
         <div className="text-gray-500 text-right">{confidence.toFixed(2)}</div>
       </div>
     </div>
-
-
   );
 }
 
 export function Segment() {
+  const [inputImage, setInputImage] = useState<string | null>(null);
+  const [outputImage, setOutputImage] = useState<string | null>(null);
+
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setInputImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGenerate = () => {
+    // Replace this with your image generation logic
+    setOutputImage(inputImage);
+  };
+
+  const handleSave = () => {
+    if (outputImage) {
+      const link = document.createElement('a');
+      link.href = outputImage;
+      link.download = 'output_image.png';
+      link.click();
+    }
+  };
+
+  const handleTryAgain = () => {
+    setInputImage(null);
+    setOutputImage(null);
+  };
+
   return (
     <div className="flex flex-col h-full">
-            <div className="flex flex-col grow max-md:max-w-full h-full">
-              <div className="px-6 pt-6 bg-white max-md:px-5 max-md:max-w-full h-full">
-                <div className="flex gap-5 max-md:flex-col max-md:gap-0">
-                  <div className="flex flex-col w-6/12 max-md:ml-0 max-md:w-full h-full">
-                    <div className="flex flex-col grow self-stretch pt-1.5 pb-20 max-md:mt-10 max-md:max-w-full h-full">
-                      <div className="text-base font-medium leading-6 text-ellipsis text-neutral-700 max-md:max-w-full h-full">
-                        Input
-                      </div>
-                      <div className="justify-center p-6 mt-3 text-2xl leading-8 bg-white rounded-lg border border-solid border-neutral-200 text-zinc-500 max-md:px-5 max-md:max-w-full">
-                        What kind of image would you like to create? The more
-                        detailed, the better.
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col ml-5 w-6/12 max-md:ml-0 max-md:w-full">
-                    <div className="flex flex-col grow justify-center self-stretch pt-1.5 max-md:mt-10 max-md:max-w-full h-full">
-                      <div className="text-base font-medium leading-6 text-ellipsis text-neutral-700 max-md:max-w-full h-full">
-                        Output
-                      </div>
-                      <div className="flex flex-col justify-center px-16 py-20 mt-3 rounded-lg border border-solid bg-neutral-100 border-neutral-200 max-md:px-5 max-md:max-w-full h-full">
-                        <img
-                          loading="lazy"
-                          srcSet="..."
-                          className="mt-3.5 mr-7 mb-4 ml-7 w-full aspect-[0.75] max-md:mx-2.5"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-5 justify-end py-6 pr-8 pl-20 text-base font-medium leading-6 bg-white max-md:flex-wrap max-md:px-5">
-                <div className="justify-center px-4 py-2 text-white whitespace-nowrap rounded-lg bg-neutral-700">
-                  Save
-                </div>
-                <div className="justify-center px-4 py-2 rounded-lg bg-zinc-100 text-neutral-700">
-                  Try again
-                </div>
-              </div>
-            </div>
+      <div className="flex-grow flex max-md:flex-col gap-4 overflow-y-auto">
+        <div className="flex flex-col w-1/2 max-md:w-full h-[calc(100vh-140px)] p-4 bg-white rounded-lg border border-neutral-200">
+          <div className="text-base font-medium leading-6 text-neutral-700 mb-4">
+            Input
           </div>
-
-    
+          <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
+            {!inputImage && (
+              <label
+                htmlFor="file-upload"
+                className="flex flex-col items-center cursor-pointer"
+              >
+                <UploadIcon className="w-12 h-12 text-gray-400" />
+                <span className="mt-2 text-sm leading-normal text-gray-600">
+                  Upload an image
+                </span>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="sr-only"
+                />
+              </label>
+            )}
+            {inputImage && (
+              <img
+                src={inputImage}
+                alt="Uploaded"
+                className="max-h-full max-w-full object-contain"
+              />
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col w-1/2 max-md:w-full h-[calc(100vh-140px)] p-4 bg-white rounded-lg border border-neutral-200">
+          <div className="text-base font-medium leading-6 text-neutral-700 mb-4">
+            Output
+          </div>
+          <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
+            {outputImage ? (
+              <img
+                src={outputImage}
+                alt="Generated"
+                className="max-h-full max-w-full object-contain"
+              />
+            ) : (
+              <div className="text-gray-500">No image generated yet</div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-between py-4 bg-white">
+        <button
+          onClick={handleGenerate}
+          className="px-4 py-2 text-white rounded-lg bg-neutral-700"
+        >
+          Generate
+        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 text-white rounded-lg bg-neutral-700"
+          >
+            Save
+          </button>
+          <button
+            onClick={handleTryAgain}
+            className="px-4 py-2 text-neutral-700 rounded-lg bg-zinc-100"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
