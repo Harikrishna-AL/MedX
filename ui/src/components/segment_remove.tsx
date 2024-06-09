@@ -1,5 +1,4 @@
-import React, { useState, ChangeEvent } from 'react';
-import { UploadIcon } from '@heroicons/react/outline';
+import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect } from 'react';
 
 export function InteractiveSegment() {
   const [confidence, setConfidence] = useState(0.92);
@@ -24,23 +23,94 @@ export function InteractiveSegment() {
 }
 
 export function Segment() {
-  const [inputImage, setInputImage] = useState<string | null>(null);
+  const [inputImage, setInputImage] = useState<HTMLImageElement | null>(null);
   const [outputImage, setOutputImage] = useState<string | null>(null);
+  const [points, setPoints] = useState<{ x: number, y: number }[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setInputImage(reader.result as string);
+        const img = new Image();
+        img.onload = () => {
+          setInputImage(img);
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const drawImageOnCanvas = (img: HTMLImageElement) => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const containerWidth = canvas.parentElement?.clientWidth || 0;
+        const containerHeight = canvas.parentElement?.clientHeight || 0;
+
+        const aspectRatio = img.width / img.height;
+        let canvasWidth, canvasHeight;
+
+        if (img.width > containerWidth || img.height > containerHeight) {
+          if (containerWidth / containerHeight > aspectRatio) {
+            canvasHeight = containerHeight;
+            canvasWidth = canvasHeight * aspectRatio;
+          } else {
+            canvasWidth = containerWidth;
+            canvasHeight = canvasWidth / aspectRatio;
+          }
+        } else {
+          canvasWidth = img.width;
+          canvasHeight = img.height;
+        }
+
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+
+        ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+      }
+    }
+  };
+
+  const handleCanvasClick = (e: MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setPoints(prevPoints => {
+        const newPoints = [...prevPoints, { x, y }];
+        drawPoints(newPoints);
+        console.log(newPoints);
+        return newPoints;
+      });
+    }
+  };
+
+  const drawPoints = (pointsToDraw: { x: number, y: number }[]) => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx && inputImage) {
+        drawImageOnCanvas(inputImage);
+        pointsToDraw.forEach(point => {
+          ctx.fillStyle = 'red';
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 5, 0, Math.PI * 2, true);
+          ctx.fill();
+        });
+      }
+    }
+  };
+
   const handleGenerate = () => {
-    // Replace this with your image generation logic
-    setOutputImage(inputImage);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      setOutputImage(canvas.toDataURL('image/png'));
+    }
   };
 
   const handleSave = () => {
@@ -55,7 +125,21 @@ export function Segment() {
   const handleTryAgain = () => {
     setInputImage(null);
     setOutputImage(null);
+    setPoints([]);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
   };
+
+  useEffect(() => {
+    if (inputImage) {
+      drawImageOnCanvas(inputImage);
+    }
+  }, [inputImage]);
 
   return (
     <div className="flex flex-col h-full">
@@ -66,30 +150,23 @@ export function Segment() {
           </div>
           <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
             {!inputImage && (
-              <label
-                htmlFor="file-upload"
-                className="flex flex-col items-center cursor-pointer"
-              >
-                <UploadIcon className="w-12 h-12 text-gray-400" />
-                <span className="mt-2 text-sm leading-normal text-gray-600">
-                  Upload an image
-                </span>
+              <>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload an image:
+                </label>
                 <input
-                  id="file-upload"
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
-                  className="sr-only"
+                  className="mb-4"
                 />
-              </label>
+              </>
             )}
-            {inputImage && (
-              <img
-                src={inputImage}
-                alt="Uploaded"
-                className="max-h-full max-w-full object-contain"
-              />
-            )}
+            <canvas
+              ref={canvasRef}
+              onClick={handleCanvasClick}
+              className="border border-neutral-200 max-w-full max-h-full"
+            ></canvas>
           </div>
         </div>
         <div className="flex flex-col w-1/2 max-md:w-full h-[calc(100vh-140px)] p-4 bg-white rounded-lg border border-neutral-200">
