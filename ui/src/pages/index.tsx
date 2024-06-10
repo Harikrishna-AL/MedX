@@ -28,6 +28,7 @@ function Popup(text: string, timeout: number = 1000) {
 export default function Home() {
 
   const [segmentVisible, setSegmentVisible] = useState(false);
+  const [points, setPoints] = useState<{ x: number, y: number }[]>([]);
 
   return (
     <div className="flex flex-col bg-neutral-100">
@@ -81,7 +82,7 @@ export default function Home() {
               </div>
               {segmentVisible && (
                   <div className="mt-2">
-                  <InteractiveSegment />
+                  <InteractiveSegment points={points} setPoints={setPoints}/>
                 </div>
               )}
               <div className="flex gap-2 justify-center px-4 py-2 mt-7 rounded-lg bg-zinc-100">
@@ -117,7 +118,7 @@ export default function Home() {
           <div className="flex flex-col w-[85%] max-md:w-full h-full">
           {segmentVisible ? (
               <div className="flex flex-col">
-                <Segment />
+                <Segment points={points} setPoints={setPoints}/>
               </div>
             ) : (
               <div className="flex-wrap justify-between content-between px-4 py-4 mx-12 my-12 text-2xl leading-10 text-black whitespace-nowrap rounded-lg border border-solid border-neutral-200 max-md:mt-10 max-md:max-w-full">

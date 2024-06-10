@@ -1,8 +1,40 @@
 import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect } from 'react';
 import { FaUpload } from 'react-icons/fa';
 
-export function InteractiveSegment() {
+type Point = { x: number; y: number };
+
+const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>> }> = ({ points, setPoints }) => {
   const [confidence, setConfidence] = useState(0.92);
+
+  const handleSegment = async (threshold: number) => {
+    const positivePoints = points.map(point => [point.x, point.y]);
+    const requestBody = {
+      positive_points: positivePoints,
+      negative_points: [],
+      threshold,
+    };
+
+    try {
+      const response = await fetch('http://127.0.0.1:8188/sam/detect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error('Segmentation API call failed');
+      }
+
+      const data = await response.json();
+      console.log('Segmentation result:', data);
+
+      // Handle the segmentation result if needed
+    } catch (error) {
+      console.error('Error during segmentation:', error);
+    }
+  };
 
   return (
     <div className="flex flex-col p-4 bg-white rounded-lg shadow-md">
@@ -18,30 +50,69 @@ export function InteractiveSegment() {
           className="my-2"
         />
         <div className="text-gray-500 text-right">{confidence.toFixed(2)}</div>
+        <button
+          onClick={() => handleSegment(confidence)}
+          className="mt-2 px-4 py-2 text-white rounded-lg bg-neutral-700"
+        >
+          Segment
+        </button>
       </div>
     </div>
   );
 }
 
-export function Segment() {
+const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>> }> = ({ points, setPoints }) => {
   const [inputImage, setInputImage] = useState<HTMLImageElement | null>(null);
   const [outputImage, setOutputImage] = useState<string | null>(null);
-  const [points, setPoints] = useState<{ x: number, y: number }[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
-  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new Image();
-        img.onload = () => {
-          setInputImage(img);
-        };
-        img.src = reader.result as string;
-      };
-      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const response = await fetch('http://127.0.0.1:8188/upload/image', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Image upload failed');
+        }
+
+        const data = await response.json();
+
+        if (data && data.type === 'input') {
+          const img = new Image();
+          img.onload = () => {
+            setInputImage(img);
+          };
+          img.src = URL.createObjectURL(file);
+
+          // Call the prepare API with the required JSON body
+          const prepareResponse = await fetch('http://127.0.0.1:8188/sam/prepare', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              sam_model_name: 'auto',
+              filename: data.name,
+              subfolder: data.subfolder,
+              type: data.type,
+            }),
+          });
+
+          if (!prepareResponse.ok) {
+            throw new Error('Prepare API call failed');
+          }
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+      }
     }
   };
 
@@ -133,6 +204,36 @@ export function Segment() {
     }
   };
 
+  const handleSegment = async (threshold: number) => {
+    const positivePoints = points.map(point => [point.x, point.y]);
+    const requestBody = {
+      positive_points: positivePoints,
+      negative_points: [],
+      threshold,
+    };
+
+    try {
+      const response = await fetch('http://127.0.0.1:8188/sam/detect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error('Segmentation API call failed');
+      }
+
+      const data = await response.json();
+      console.log('Segmentation result:', data);
+
+      // Handle the segmentation result if needed
+    } catch (error) {
+      console.error('Error during segmentation:', error);
+    }
+  };
+
   useEffect(() => {
     if (inputImage) {
       drawImageOnCanvas(inputImage);
@@ -210,3 +311,5 @@ export function Segment() {
     </div>
   );
 }
+
+export { Segment, InteractiveSegment };
