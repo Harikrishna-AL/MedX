@@ -1,4 +1,5 @@
 import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect } from 'react';
+import { FaUpload } from 'react-icons/fa';
 
 export function InteractiveSegment() {
   const [confidence, setConfidence] = useState(0.92);
@@ -27,6 +28,7 @@ export function Segment() {
   const [outputImage, setOutputImage] = useState<string | null>(null);
   const [points, setPoints] = useState<{ x: number, y: number }[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,19 +56,15 @@ export function Segment() {
         const aspectRatio = img.width / img.height;
         let canvasWidth, canvasHeight;
 
-        if (img.width > containerWidth || img.height > containerHeight) {
-          if (containerWidth / containerHeight > aspectRatio) {
-            canvasHeight = containerHeight;
-            canvasWidth = canvasHeight * aspectRatio;
-          } else {
-            canvasWidth = containerWidth;
-            canvasHeight = canvasWidth / aspectRatio;
-          }
+        if (containerWidth / containerHeight > aspectRatio) {
+          canvasHeight = containerHeight;
+          canvasWidth = canvasHeight * aspectRatio;
         } else {
-          canvasWidth = img.width;
-          canvasHeight = img.height;
+          canvasWidth = containerWidth;
+          canvasHeight = canvasWidth / aspectRatio;
         }
 
+        setCanvasSize({ width: canvasWidth, height: canvasHeight });
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
@@ -84,7 +82,6 @@ export function Segment() {
       setPoints(prevPoints => {
         const newPoints = [...prevPoints, { x, y }];
         drawPoints(newPoints);
-        console.log(newPoints);
         return newPoints;
       });
     }
@@ -95,7 +92,8 @@ export function Segment() {
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx && inputImage) {
-        drawImageOnCanvas(inputImage);
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
+        ctx.drawImage(inputImage, 0, 0, canvasSize.width, canvasSize.height); // Maintain original size
         pointsToDraw.forEach(point => {
           ctx.fillStyle = 'red';
           ctx.beginPath();
@@ -150,23 +148,24 @@ export function Segment() {
           </div>
           <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
             {!inputImage && (
-              <>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload an image:
-                </label>
+              <label className="flex flex-col items-center gap-2 text-gray-700 cursor-pointer">
+                <FaUpload size={48} />
+                <span className="text-lg">Upload an image</span>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
-                  className="mb-4"
+                  className="hidden"
                 />
-              </>
+              </label>
             )}
-            <canvas
-              ref={canvasRef}
-              onClick={handleCanvasClick}
-              className="border border-neutral-200 max-w-full max-h-full"
-            ></canvas>
+            {inputImage && (
+              <canvas
+                ref={canvasRef}
+                onClick={handleCanvasClick}
+                className="border border-neutral-200 max-w-full max-h-full"
+              ></canvas>
+            )}
           </div>
         </div>
         <div className="flex flex-col w-1/2 max-md:w-full h-[calc(100vh-140px)] p-4 bg-white rounded-lg border border-neutral-200">
