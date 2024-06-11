@@ -64,6 +64,7 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
 const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>> }> = ({ points, setPoints }) => {
   const [inputImage, setInputImage] = useState<HTMLImageElement | null>(null);
   const [outputImage, setOutputImage] = useState<string | null>(null);
+  const [originalImageSize, setOriginalImageSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
@@ -89,6 +90,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
           const img = new Image();
           img.onload = () => {
             setInputImage(img);
+            setOriginalImageSize({ width: img.width, height: img.height });
           };
           img.src = URL.createObjectURL(file);
 
@@ -150,8 +152,12 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
+      const scaleX = originalImageSize.width / canvas.width;
+      const scaleY = originalImageSize.height / canvas.height;
+      const originalX = x * scaleX;
+      const originalY = y * scaleY;
       setPoints(prevPoints => {
-        const newPoints = [...prevPoints, { x, y }];
+        const newPoints = [...prevPoints, { x: originalX, y: originalY }];
         drawPoints(newPoints);
         return newPoints;
       });
@@ -166,9 +172,13 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
         ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
         ctx.drawImage(inputImage, 0, 0, canvasSize.width, canvasSize.height); // Maintain original size
         pointsToDraw.forEach(point => {
+          const scaleX = canvas.width / originalImageSize.width;
+          const scaleY = canvas.height / originalImageSize.height;
+          const canvasX = point.x * scaleX;
+          const canvasY = point.y * scaleY;
           ctx.fillStyle = 'red';
           ctx.beginPath();
-          ctx.arc(point.x, point.y, 5, 0, Math.PI * 2, true);
+          ctx.arc(canvasX, canvasY, 5, 0, Math.PI * 2, true);
           ctx.fill();
         });
       }
@@ -201,36 +211,6 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
-    }
-  };
-
-  const handleSegment = async (threshold: number) => {
-    const positivePoints = points.map(point => [point.x, point.y]);
-    const requestBody = {
-      positive_points: positivePoints,
-      negative_points: [],
-      threshold,
-    };
-
-    try {
-      const response = await fetch('http://127.0.0.1:8188/sam/detect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error('Segmentation API call failed');
-      }
-
-      const data = await response.json();
-      console.log('Segmentation result:', data);
-
-      // Handle the segmentation result if needed
-    } catch (error) {
-      console.error('Error during segmentation:', error);
     }
   };
 
