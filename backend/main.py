@@ -1,7 +1,7 @@
 from fastapi import Depends, FastAPI, HTTPException, status, Response
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-
-# import list
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from routes import auth
 import uvicorn
@@ -14,8 +14,15 @@ import os
 COMFY_URI = "http://127.0.0.1:8188/"
 app = FastAPI()
 
-app.include_router(auth.router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+app.include_router(auth.router)
 
 class SAMDetect(BaseModel):
     image_path: str
@@ -50,9 +57,17 @@ def detect(sam_detect: SAMDetect):
 
     original_image.save("temp.png")
     original_image = open("temp.png", "rb")
+
     files = {"image": original_image}
+
     img_upload_res = requests.post(img_upload_uri, files=files)
+
+    buf = BytesIO()
+    original_image.save(buf, format="PNG")
+    buf.seek(0)
+
     return img_upload_res.json()
+
 
 
 @app.get("/output")
@@ -60,7 +75,7 @@ def get_output(workflow_json: dict, image_path: str):
     prompt_uri = COMFY_URI + "prompt"
     COMFY_OUTPUT_LOCATION = "/Users/vishal/Desktop/hack/ComfyUI/output"
 
-    print(workflow_json)
+    # print(workflow_json)
     workflow_json["2"]["inputs"]["image"] = image_path
     workflow = {"prompt": workflow_json}
     prompt_res = requests.post(prompt_uri, json=workflow)

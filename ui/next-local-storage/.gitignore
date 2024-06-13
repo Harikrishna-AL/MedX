@@ -1,25 +1,24 @@
-__pycache__/
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-ui/node_modules
-ui/.pnp
+/node_modules
+/.pnp
 .pnp.js
+.yarn/install-state.gz
 
 # testing
-ui/coverage
+/coverage
 
 # next.js
-ui/.next/
-ui/out/
+/.next/
+/out/
 
 # production
-ui/build
+/build
 
 # misc
 .DS_Store
 *.pem
-__pycache__
 
 # debug
 npm-debug.log*
@@ -35,12 +34,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-*tmp*
-*temp*
-*.pth
-*.onnx
-*-lock.json
-
-
-/next-local-storage

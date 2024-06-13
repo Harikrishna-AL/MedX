@@ -6,64 +6,58 @@ type CanvasData = {
   canvas: HTMLCanvasElement | null;
   image: HTMLImageElement | null;
   size: { width: number; height: number };
+  imagePath: string;
 };
 
 const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; canvasData: CanvasData }> = ({ points, setPoints, canvasData }) => {
   const [confidence, setConfidence] = useState(0.92);
 
   const handleSegment = async (threshold: number) => {
+    let fileName = localStorage.getItem("fileName");
+
     const positivePoints = points.map((point) => [point.x, point.y]);
     const requestBody = {
+      image_path: fileName,
       positive_points: positivePoints,
       negative_points: [],
       threshold,
     };
-  
+    console.log('Segmentation request:', requestBody);
     try {
-      const response = await fetch('http://127.0.0.1:8188/sam/detect', {
+      const response = await fetch('http://0.0.0.0:8000/sam/detect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
       });
-  
+
       if (!response.ok) {
         throw new Error('Segmentation API call failed');
       }
-  
-      const data = await response.blob();
-      const mask = URL.createObjectURL(data);
-  
+
+      const data = await response.json();
+      const maskPath = `/Users/vishal/Desktop/hack/ComfyUI/input/${data.name}`;
+
       const maskImage = new Image();
       maskImage.onload = () => {
         const { canvas, image, size } = canvasData;
         if (canvas && image) {
           const ctx = canvas.getContext('2d');
           if (ctx) {
-            // Create a separate canvas for the mask
-            const maskCanvas = document.createElement('canvas');
-            maskCanvas.width = size.width;
-            maskCanvas.height = size.height;
-            const maskCtx = maskCanvas.getContext('2d');
-            if (maskCtx) {
-              // Draw the mask on the separate canvas
-              maskCtx.drawImage(maskImage, 0, 0, size.width, size.height);
-  
-              // Blend the mask with the original image on the main canvas
-              ctx.drawImage(image, 0, 0, size.width, size.height);
-              ctx.globalCompositeOperation = 'source-in'; // Set composite mode to only show areas where mask is present
-              ctx.drawImage(maskCanvas, 0, 0, size.width, size.height);
-            }
+            ctx.clearRect(0, 0, size.width, size.height);
+            ctx.drawImage(image, 0, 0, size.width, size.height);
+            ctx.globalCompositeOperation = 'source-in';
+            ctx.drawImage(maskImage, 0, 0, size.width, size.height);
+            ctx.globalCompositeOperation = 'source-over';
           }
         }
       };
-      maskImage.src = mask;
+      maskImage.src = maskPath;
     } catch (error) {
       console.error('Error during segmentation:', error);
     }
   };
-  
 
   return (
     <div className="flex flex-col p-4 bg-white rounded-lg shadow-md">
@@ -88,16 +82,17 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
       </div>
     </div>
   );
-}
+};
 
 const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>> }> = ({ points, setPoints }) => {
-  const [canvasData, setCanvasData] = useState<CanvasData>({ canvas: null, image: null, size: { width: 0, height: 0 } });
+  const [canvasData, setCanvasData] = useState<CanvasData>({ canvas: null, image: null, size: { width: 0, height: 0 }, imagePath: '' });
   const [outputImage, setOutputImage] = useState<string | null>(null);
   const [originalImageSize, setOriginalImageSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (file) {
       const formData = new FormData();
       formData.append('image', file);
@@ -113,16 +108,18 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
         }
 
         const data = await response.json();
+        let fileName = data.name as string;
+        console.log("Debug __FILE__", fileName);
+        localStorage.setItem("fileName", fileName);
 
         if (data && data.type === 'input') {
           const img = new Image();
           img.onload = () => {
-            setCanvasData({ ...canvasData, image: img });
+            setCanvasData({ ...canvasData, image: img, imagePath: data.name });
             setOriginalImageSize({ width: img.width, height: img.height });
           };
           img.src = URL.createObjectURL(file);
 
-          // Call the prepare API with the required JSON body
           const prepareResponse = await fetch('http://127.0.0.1:8188/sam/prepare', {
             method: 'POST',
             headers: {
@@ -197,8 +194,8 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx && image) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
-        ctx.drawImage(image, 0, 0, size.width, size.height); // Maintain original size
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0, size.width, size.height);
         pointsToDraw.forEach(point => {
           const scaleX = canvas.width / originalImageSize.width;
           const scaleY = canvas.height / originalImageSize.height;
@@ -230,7 +227,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   };
 
   const handleTryAgain = () => {
-    setCanvasData({ canvas: null, image: null, size: { width: 0, height: 0 } });
+    setCanvasData({ canvas: null, image: null, size: { width: 0, height: 0 }, imagePath: '' });
     setOutputImage(null);
     setPoints([]);
     const { canvas } = canvasData;
