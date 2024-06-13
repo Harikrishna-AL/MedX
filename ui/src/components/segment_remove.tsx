@@ -2,18 +2,23 @@ import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect } from 'rea
 import { FaUpload } from 'react-icons/fa';
 
 type Point = { x: number; y: number };
+type CanvasData = {
+  canvas: HTMLCanvasElement | null;
+  image: HTMLImageElement | null;
+  size: { width: number; height: number };
+};
 
-const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>> }> = ({ points, setPoints }) => {
+const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; canvasData: CanvasData }> = ({ points, setPoints, canvasData }) => {
   const [confidence, setConfidence] = useState(0.92);
 
   const handleSegment = async (threshold: number) => {
-    const positivePoints = points.map(point => [point.x, point.y]);
+    const positivePoints = points.map((point) => [point.x, point.y]);
     const requestBody = {
       positive_points: positivePoints,
       negative_points: [],
       threshold,
     };
-
+  
     try {
       const response = await fetch('http://127.0.0.1:8188/sam/detect', {
         method: 'POST',
@@ -22,19 +27,43 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
         },
         body: JSON.stringify(requestBody),
       });
-
+  
       if (!response.ok) {
         throw new Error('Segmentation API call failed');
       }
-
-      const data = await response.json();
-      console.log('Segmentation result:', data);
-
-      // Handle the segmentation result if needed
+  
+      const data = await response.blob();
+      const mask = URL.createObjectURL(data);
+  
+      const maskImage = new Image();
+      maskImage.onload = () => {
+        const { canvas, image, size } = canvasData;
+        if (canvas && image) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Create a separate canvas for the mask
+            const maskCanvas = document.createElement('canvas');
+            maskCanvas.width = size.width;
+            maskCanvas.height = size.height;
+            const maskCtx = maskCanvas.getContext('2d');
+            if (maskCtx) {
+              // Draw the mask on the separate canvas
+              maskCtx.drawImage(maskImage, 0, 0, size.width, size.height);
+  
+              // Blend the mask with the original image on the main canvas
+              ctx.drawImage(image, 0, 0, size.width, size.height);
+              ctx.globalCompositeOperation = 'source-in'; // Set composite mode to only show areas where mask is present
+              ctx.drawImage(maskCanvas, 0, 0, size.width, size.height);
+            }
+          }
+        }
+      };
+      maskImage.src = mask;
     } catch (error) {
       console.error('Error during segmentation:', error);
     }
   };
+  
 
   return (
     <div className="flex flex-col p-4 bg-white rounded-lg shadow-md">
@@ -62,11 +91,10 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
 }
 
 const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>> }> = ({ points, setPoints }) => {
-  const [inputImage, setInputImage] = useState<HTMLImageElement | null>(null);
+  const [canvasData, setCanvasData] = useState<CanvasData>({ canvas: null, image: null, size: { width: 0, height: 0 } });
   const [outputImage, setOutputImage] = useState<string | null>(null);
   const [originalImageSize, setOriginalImageSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -89,7 +117,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
         if (data && data.type === 'input') {
           const img = new Image();
           img.onload = () => {
-            setInputImage(img);
+            setCanvasData({ ...canvasData, image: img });
             setOriginalImageSize({ width: img.width, height: img.height });
           };
           img.src = URL.createObjectURL(file);
@@ -137,7 +165,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
           canvasHeight = canvasWidth / aspectRatio;
         }
 
-        setCanvasSize({ width: canvasWidth, height: canvasHeight });
+        setCanvasData({ ...canvasData, canvas, size: { width: canvasWidth, height: canvasHeight } });
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
@@ -147,13 +175,13 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   };
 
   const handleCanvasClick = (e: MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
+    const { canvas, size } = canvasData;
     if (canvas) {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const scaleX = originalImageSize.width / canvas.width;
-      const scaleY = originalImageSize.height / canvas.height;
+      const scaleX = originalImageSize.width / size.width;
+      const scaleY = originalImageSize.height / size.height;
       const originalX = x * scaleX;
       const originalY = y * scaleY;
       setPoints(prevPoints => {
@@ -164,13 +192,13 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
     }
   };
 
-  const drawPoints = (pointsToDraw: { x: number, y: number }[]) => {
-    const canvas = canvasRef.current;
+  const drawPoints = (pointsToDraw: Point[]) => {
+    const { canvas, image, size } = canvasData;
     if (canvas) {
       const ctx = canvas.getContext('2d');
-      if (ctx && inputImage) {
+      if (ctx && image) {
         ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
-        ctx.drawImage(inputImage, 0, 0, canvasSize.width, canvasSize.height); // Maintain original size
+        ctx.drawImage(image, 0, 0, size.width, size.height); // Maintain original size
         pointsToDraw.forEach(point => {
           const scaleX = canvas.width / originalImageSize.width;
           const scaleY = canvas.height / originalImageSize.height;
@@ -186,7 +214,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   };
 
   const handleGenerate = () => {
-    const canvas = canvasRef.current;
+    const { canvas } = canvasData;
     if (canvas) {
       setOutputImage(canvas.toDataURL('image/png'));
     }
@@ -202,10 +230,10 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   };
 
   const handleTryAgain = () => {
-    setInputImage(null);
+    setCanvasData({ canvas: null, image: null, size: { width: 0, height: 0 } });
     setOutputImage(null);
     setPoints([]);
-    const canvas = canvasRef.current;
+    const { canvas } = canvasData;
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
@@ -215,10 +243,10 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   };
 
   useEffect(() => {
-    if (inputImage) {
-      drawImageOnCanvas(inputImage);
+    if (canvasData.image) {
+      drawImageOnCanvas(canvasData.image);
     }
-  }, [inputImage]);
+  }, [canvasData.image]);
 
   return (
     <div className="flex flex-col h-full">
@@ -228,7 +256,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
             Input
           </div>
           <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
-            {!inputImage && (
+            {!canvasData.image && (
               <label className="flex flex-col items-center gap-2 text-gray-700 cursor-pointer">
                 <FaUpload size={48} />
                 <span className="text-lg">Upload an image</span>
@@ -240,7 +268,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
                 />
               </label>
             )}
-            {inputImage && (
+            {canvasData.image && (
               <canvas
                 ref={canvasRef}
                 onClick={handleCanvasClick}
@@ -288,6 +316,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
           </button>
         </div>
       </div>
+      <InteractiveSegment points={points} setPoints={setPoints} canvasData={canvasData} />
     </div>
   );
 }

@@ -2,13 +2,19 @@ import Head from 'next/head'
 import { useState, useEffect, useRef } from 'react'
 import { InferenceSession, Tensor } from "onnxruntime-web";
 // import { InteractiveSegment, Point, Mask, Data }
-import {InteractiveSegment, Segment} from '../components/segment_remove';
+import { InteractiveSegment, Segment } from '../components/segment_remove';
 import * as ort from 'onnxruntime-web';
 import * as utils from '@/utils';
 
 const uiBasiclClassName = 'transition-all my-2 rounded-xl px-4 py-2 cursor-pointer outline outline-gray-200 text-left ';
 const uiActiveClassName = 'bg-blue-500 text-white';
 const uiInactiveClassName = 'bg-white text-gray-400';
+
+type CanvasData = {
+  canvas: HTMLCanvasElement | null;
+  image: HTMLImageElement | null;
+  size: { width: number; height: number };
+};
 
 function Popup(text: string, timeout: number = 1000) {
   const popup = document.createElement('div')
@@ -20,15 +26,10 @@ function Popup(text: string, timeout: number = 1000) {
   }, timeout)
 }
 
-
-// function Workspace() {
-    
-// }  
-
 export default function Home() {
-
   const [segmentVisible, setSegmentVisible] = useState(false);
   const [points, setPoints] = useState<{ x: number, y: number }[]>([]);
+  const [canvasData, setCanvasData] = useState<CanvasData>({ canvas: null, image: null, size: { width: 0, height: 0 } });
 
   return (
     <div className="flex flex-col bg-neutral-100">
@@ -81,8 +82,8 @@ export default function Home() {
                 />
               </div>
               {segmentVisible && (
-                  <div className="mt-2">
-                  <InteractiveSegment points={points} setPoints={setPoints}/>
+                <div className="mt-2">
+                  <InteractiveSegment points={points} setPoints={setPoints} canvasData={canvasData} />
                 </div>
               )}
               <div className="flex gap-2 justify-center px-4 py-2 mt-7 rounded-lg bg-zinc-100">
@@ -103,8 +104,6 @@ export default function Home() {
               </div>
               <div   
               className="flex gap-4 px-4 py-2 whitespace-nowrap bg-white rounded-lg max-md:mt-10 fixed mt-[551px]"
-
-              // className="flex gap-4 px-4 py-2 whitespace-nowrap bg-white rounded-lg mt-[551px] max-md:mt-10" 
               style={{ bottom: '50px' }}>
                 <img
                   loading="lazy"
@@ -116,38 +115,36 @@ export default function Home() {
             </div>
           </div>
           <div className="flex flex-col w-[85%] max-md:w-full h-full">
-          {segmentVisible ? (
+            {segmentVisible ? (
               <div className="flex flex-col">
-                <Segment points={points} setPoints={setPoints}/>
+                <Segment points={points} setPoints={setPoints} />
               </div>
             ) : (
               <div className="flex-wrap justify-between content-between px-4 py-4 mx-12 my-12 text-2xl leading-10 text-black whitespace-nowrap rounded-lg border border-solid border-neutral-200 max-md:mt-10 max-md:max-w-full">
-              Instructions:
-              <br />
-              vewfwewefew
-              <br />
-              dfefeferr
-              <br />
-              fewffefe
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-            </div>
-
+                Instructions:
+                <br />
+                vewfwewefew
+                <br />
+                dfefeferr
+                <br />
+                fewffefe
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+              </div>
             )}
           </div>
-
         </div>
       </div>
     </div>
