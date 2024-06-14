@@ -7,7 +7,7 @@ from routes import auth
 import uvicorn
 import requests
 import base64
-from PIL import Image
+from PIL import Image, ImageEnhance
 from io import BytesIO
 import os
 
@@ -46,31 +46,37 @@ def detect(sam_detect: SAMDetect):
     image_bytes = detect_res.content
     image_base64 = base64.b64encode(image_bytes).decode("utf-8")
 
-    mask_image = Image.open(BytesIO(image_bytes)).convert("L")
-    mask_image = mask_image.point(lambda p: 255 - p)
+    mask_image_r = Image.open(BytesIO(image_bytes)).convert("L")
+    mask_image = mask_image_r.point(lambda p: 255 - p)
+
+    # overlay mask on the original image to highlight the detected region
+
+
 
     query_params = {"filename": sam_detect.image_path, "type": "input"}
     fetch_img_res = requests.get(fetch_img_uri, params=query_params)
     fetch_img_bytes = fetch_img_res.content
     original_image = Image.open(BytesIO(fetch_img_bytes))
-    original_image.putalpha(mask_image)
 
+    mask_image_rgb = mask_image_r.point(lambda p: p > 128 and 255)
+    dull_image = ImageEnhance.Brightness(original_image).enhance(0.3)  
+    mask_preview = Image.composite(original_image, dull_image, mask_image_rgb)
+    mask_preview.show()
+    mask_preview_base64 = base64.b64encode(mask_preview.tobytes()).decode("utf-8")
+
+    original_image.putalpha(mask_image)
     original_image.save("temp.png")
     original_image = open("temp.png", "rb")
-
     files = {"image": original_image}
-
     img_upload_res = requests.post(img_upload_uri, files=files)
 
-    buf = BytesIO()
-    original_image.save(buf, format="PNG")
-    buf.seek(0)
-
-    return img_upload_res.json()
-
+    res = img_upload_res.json()
+    res["mask_preview"] = mask_preview_base64
+    return res
+    
 
 
-@app.get("/output")
+@app.post("/output")
 def get_output(workflow_json: dict, image_path: str):
     prompt_uri = COMFY_URI + "prompt"
     COMFY_OUTPUT_LOCATION = "/Users/vishal/Desktop/hack/ComfyUI/output"

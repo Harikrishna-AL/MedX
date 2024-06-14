@@ -1,0 +1,105 @@
+{
+  "2": {
+    "inputs": {
+      "image": "pasted/image (2).png",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "75": {
+    "inputs": {
+      "dilation": 5,
+      "mask": [
+        "218",
+        1
+      ]
+    },
+    "class_type": "ImpactDilateMask",
+    "_meta": {
+      "title": "Dilate Mask"
+    }
+  },
+  "216": {
+    "inputs": {
+      "mask_threshold": 250,
+      "gaussblur_radius": 8,
+      "invert_mask": false,
+      "images": [
+        "218",
+        0
+      ],
+      "masks": [
+        "75",
+        0
+      ]
+    },
+    "class_type": "LamaRemover",
+    "_meta": {
+      "title": "Big lama Remover"
+    }
+  },
+  "218": {
+    "inputs": {
+      "action": "resize only",
+      "smaller_side": 0,
+      "larger_side": 768,
+      "scale_factor": 0,
+      "resize_mode": "any",
+      "side_ratio": "4:3",
+      "crop_pad_position": 0.5,
+      "pad_feathering": 20,
+      "pixels": [
+        "2",
+        0
+      ],
+      "mask_optional": [
+        "2",
+        1
+      ]
+    },
+    "class_type": "ImageResize",
+    "_meta": {
+      "title": "Image Resize"
+    }
+  },
+  "223": {
+    "inputs": {
+      "mask": [
+        "218",
+        1
+      ]
+    },
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "Convert Mask to Image"
+    }
+  },
+  "224": {
+    "inputs": {
+      "images": [
+        "223",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "226": {
+    "inputs": {
+      "filename_prefix": "medx",
+      "images": [
+        "216",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  }
+}
