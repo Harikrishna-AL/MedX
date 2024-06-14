@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect } from 'react';
+import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect, use } from 'react';
 import { FaUpload } from 'react-icons/fa';
 
 type Point = { x: number; y: number };
@@ -9,11 +9,17 @@ type CanvasData = {
   imagePath: string;
 };
 
-const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; canvasData: CanvasData }> = ({ points, setPoints, canvasData }) => {
+const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; test: string;
+  setTest: React.Dispatch<React.SetStateAction<string>>;}> = ({ points, setPoints, test, setTest}) => {
   const [confidence, setConfidence] = useState(0.92);
 
+  const [fileName, setFileName] = useState<string>('');
+
+  useEffect(() => {
+    setFileName(localStorage.getItem("fileName") || '');
+  },[test]);
+
   const handleSegment = async (threshold: number) => {
-    let fileName = localStorage.getItem("fileName");
 
     const positivePoints = points.map((point) => [point.x, point.y]);
     const requestBody = {
@@ -37,23 +43,15 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
       }
 
       const data = await response.json();
-      const maskPath = `/Users/vishal/Desktop/hack/ComfyUI/input/${data.name}`;
+      // const maskPath = `/Users/vishal/Desktop/hack/ComfyUI/input/${data.image_path}`;
 
-      const maskImage = new Image();
-      maskImage.onload = () => {
-        const { canvas, image, size } = canvasData;
-        if (canvas && image) {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, size.width, size.height);
-            ctx.drawImage(image, 0, 0, size.width, size.height);
-            ctx.globalCompositeOperation = 'source-in';
-            ctx.drawImage(maskImage, 0, 0, size.width, size.height);
-            ctx.globalCompositeOperation = 'source-over';
-          }
-        }
-      };
-      maskImage.src = maskPath;
+      console.log('Segmentation response:', data.name);
+
+      // Store the image path in the fileName state
+      setFileName(data.name);
+      console.log(fileName);
+      localStorage.setItem("fileName", fileName);
+      setTest(data.name);
     } catch (error) {
       console.error('Error during segmentation:', error);
     }
@@ -84,11 +82,18 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
   );
 };
 
-const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>> }> = ({ points, setPoints }) => {
+const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; test: string;
+  setTest: React.Dispatch<React.SetStateAction<string>>;}> = ({ points, setPoints, test, setTest}) => {
   const [canvasData, setCanvasData] = useState<CanvasData>({ canvas: null, image: null, size: { width: 0, height: 0 }, imagePath: '' });
   const [outputImage, setOutputImage] = useState<string | null>(null);
   const [originalImageSize, setOriginalImageSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [fileName, setFileName] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    setFileName(localStorage.getItem("fileName") || '');
+  },[test]);
+
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -210,10 +215,35 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
     }
   };
 
-  const handleGenerate = () => {
-    const { canvas } = canvasData;
-    if (canvas) {
-      setOutputImage(canvas.toDataURL('image/png'));
+  const handleGenerate = async () => {
+    try {
+      const workflowResponse = await fetch('/ComfyUI workflow API (2).json');
+      if (!workflowResponse.ok) {
+        throw new Error('Failed to load workflow.json');
+      }
+
+      const workflowData = await workflowResponse.json();
+
+      const outputResponse = await fetch(`http://0.0.0.0:8000/output?image_path=${fileName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(workflowData),
+      });
+
+      if (!outputResponse.ok) {
+        throw new Error('Output API call failed');
+      }
+
+      const blob = await outputResponse.blob();
+      const imageUrl = URL.createObjectURL(blob);
+
+      setOutputImage(imageUrl);
+
+      console.log('Output generated successfully');
+    } catch (error) {
+      console.error('Error generating output:', error);
     }
   };
 
@@ -313,7 +343,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
           </button>
         </div>
       </div>
-      <InteractiveSegment points={points} setPoints={setPoints} canvasData={canvasData} />
+      {/* <InteractiveSegment points={points} setPoints={setPoints} /> */}
     </div>
   );
 }
