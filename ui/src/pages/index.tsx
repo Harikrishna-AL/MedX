@@ -1,22 +1,5 @@
-import Head from 'next/head'
 import { useState, useEffect, useRef } from 'react'
-import { InferenceSession, Tensor } from "onnxruntime-web";
-// import { InteractiveSegment, Point, Mask, Data }
 import {InteractiveSegment, Segment} from '../components/segment_remove';
-
-const uiBasiclClassName = 'transition-all my-2 rounded-xl px-4 py-2 cursor-pointer outline outline-gray-200 text-left ';
-const uiActiveClassName = 'bg-blue-500 text-white';
-const uiInactiveClassName = 'bg-white text-gray-400';
-
-function Popup(text: string, timeout: number = 1000) {
-  const popup = document.createElement('div')
-  popup.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 z-50 bg-white text-gray-500 rounded-xl px-4 py-2'
-  popup.innerHTML = text
-  document.body.appendChild(popup)
-  setTimeout(() => {
-    popup.remove()
-  }, timeout)
-}
 
 export default function Home() {
 
