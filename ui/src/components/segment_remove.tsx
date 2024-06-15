@@ -1,21 +1,36 @@
-import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect } from 'react';
+import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect, use } from 'react';
 import { FaUpload } from 'react-icons/fa';
 
 type Point = { x: number; y: number };
+type CanvasData = {
+  canvas: HTMLCanvasElement | null;
+  image: HTMLImageElement | null;
+  size: { width: number; height: number };
+  imagePath: string;
+};
 
-const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>> }> = ({ points, setPoints }) => {
+const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; test: string;
+  setTest: React.Dispatch<React.SetStateAction<string>>;}> = ({ points, setPoints, test, setTest}) => {
   const [confidence, setConfidence] = useState(0.92);
 
+  const [fileName, setFileName] = useState<string>('');
+
+  useEffect(() => {
+    setFileName(localStorage.getItem("fileName") || '');
+  },[test]);
+
   const handleSegment = async (threshold: number) => {
-    const positivePoints = points.map(point => [point.x, point.y]);
+
+    const positivePoints = points.map((point) => [point.x, point.y]);
     const requestBody = {
+      image_path: fileName,
       positive_points: positivePoints,
       negative_points: [],
       threshold,
     };
-
+    console.log('Segmentation request:', requestBody);
     try {
-      const response = await fetch('http://127.0.0.1:8188/sam/detect', {
+      const response = await fetch('http://0.0.0.0:8000/sam/detect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -28,9 +43,15 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
       }
 
       const data = await response.json();
-      console.log('Segmentation result:', data);
+      // const maskPath = `/Users/vishal/Desktop/hack/ComfyUI/input/${data.image_path}`;
 
-      // Handle the segmentation result if needed
+      console.log('Segmentation response:', data.name);
+
+      // Store the image path in the fileName state
+      setFileName(data.name);
+      console.log(fileName);
+      localStorage.setItem("fileName", fileName);
+      setTest(data.name);
     } catch (error) {
       console.error('Error during segmentation:', error);
     }
@@ -59,17 +80,24 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
       </div>
     </div>
   );
-}
+};
 
-const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>> }> = ({ points, setPoints }) => {
-  const [inputImage, setInputImage] = useState<HTMLImageElement | null>(null);
+const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; test: string;
+  setTest: React.Dispatch<React.SetStateAction<string>>;}> = ({ points, setPoints, test, setTest}) => {
+  const [canvasData, setCanvasData] = useState<CanvasData>({ canvas: null, image: null, size: { width: 0, height: 0 }, imagePath: '' });
   const [outputImage, setOutputImage] = useState<string | null>(null);
   const [originalImageSize, setOriginalImageSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [fileName, setFileName] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+
+  useEffect(() => {
+    setFileName(localStorage.getItem("fileName") || '');
+  },[test]);
+
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (file) {
       const formData = new FormData();
       formData.append('image', file);
@@ -85,16 +113,18 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
         }
 
         const data = await response.json();
+        let fileName = data.name as string;
+        console.log("Debug __FILE__", fileName);
+        localStorage.setItem("fileName", fileName);
 
         if (data && data.type === 'input') {
           const img = new Image();
           img.onload = () => {
-            setInputImage(img);
+            setCanvasData({ ...canvasData, image: img, imagePath: data.name });
             setOriginalImageSize({ width: img.width, height: img.height });
           };
           img.src = URL.createObjectURL(file);
 
-          // Call the prepare API with the required JSON body
           const prepareResponse = await fetch('http://127.0.0.1:8188/sam/prepare', {
             method: 'POST',
             headers: {
@@ -137,7 +167,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
           canvasHeight = canvasWidth / aspectRatio;
         }
 
-        setCanvasSize({ width: canvasWidth, height: canvasHeight });
+        setCanvasData({ ...canvasData, canvas, size: { width: canvasWidth, height: canvasHeight } });
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
@@ -147,13 +177,13 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   };
 
   const handleCanvasClick = (e: MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
+    const { canvas, size } = canvasData;
     if (canvas) {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const scaleX = originalImageSize.width / canvas.width;
-      const scaleY = originalImageSize.height / canvas.height;
+      const scaleX = originalImageSize.width / size.width;
+      const scaleY = originalImageSize.height / size.height;
       const originalX = x * scaleX;
       const originalY = y * scaleY;
       setPoints(prevPoints => {
@@ -164,13 +194,13 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
     }
   };
 
-  const drawPoints = (pointsToDraw: { x: number, y: number }[]) => {
-    const canvas = canvasRef.current;
+  const drawPoints = (pointsToDraw: Point[]) => {
+    const { canvas, image, size } = canvasData;
     if (canvas) {
       const ctx = canvas.getContext('2d');
-      if (ctx && inputImage) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
-        ctx.drawImage(inputImage, 0, 0, canvasSize.width, canvasSize.height); // Maintain original size
+      if (ctx && image) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0, size.width, size.height);
         pointsToDraw.forEach(point => {
           const scaleX = canvas.width / originalImageSize.width;
           const scaleY = canvas.height / originalImageSize.height;
@@ -185,10 +215,35 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
     }
   };
 
-  const handleGenerate = () => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      setOutputImage(canvas.toDataURL('image/png'));
+  const handleGenerate = async () => {
+    try {
+      const workflowResponse = await fetch('/ComfyUI workflow API (2).json');
+      if (!workflowResponse.ok) {
+        throw new Error('Failed to load workflow.json');
+      }
+
+      const workflowData = await workflowResponse.json();
+
+      const outputResponse = await fetch(`http://0.0.0.0:8000/output?image_path=${fileName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(workflowData),
+      });
+
+      if (!outputResponse.ok) {
+        throw new Error('Output API call failed');
+      }
+
+      const blob = await outputResponse.blob();
+      const imageUrl = URL.createObjectURL(blob);
+
+      setOutputImage(imageUrl);
+
+      console.log('Output generated successfully');
+    } catch (error) {
+      console.error('Error generating output:', error);
     }
   };
 
@@ -202,10 +257,10 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   };
 
   const handleTryAgain = () => {
-    setInputImage(null);
+    setCanvasData({ canvas: null, image: null, size: { width: 0, height: 0 }, imagePath: '' });
     setOutputImage(null);
     setPoints([]);
-    const canvas = canvasRef.current;
+    const { canvas } = canvasData;
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
@@ -215,10 +270,10 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   };
 
   useEffect(() => {
-    if (inputImage) {
-      drawImageOnCanvas(inputImage);
+    if (canvasData.image) {
+      drawImageOnCanvas(canvasData.image);
     }
-  }, [inputImage]);
+  }, [canvasData.image]);
 
   return (
     <div className="flex flex-col h-full">
@@ -228,7 +283,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
             Input
           </div>
           <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
-            {!inputImage && (
+            {!canvasData.image && (
               <label className="flex flex-col items-center gap-2 text-gray-700 cursor-pointer">
                 <FaUpload size={48} />
                 <span className="text-lg">Upload an image</span>
@@ -240,7 +295,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
                 />
               </label>
             )}
-            {inputImage && (
+            {canvasData.image && (
               <canvas
                 ref={canvasRef}
                 onClick={handleCanvasClick}
@@ -288,6 +343,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
           </button>
         </div>
       </div>
+      {/* <InteractiveSegment points={points} setPoints={setPoints} /> */}
     </div>
   );
 }
