@@ -3,8 +3,6 @@ import { useState, useEffect, useRef } from 'react'
 import { InferenceSession, Tensor } from "onnxruntime-web";
 // import { InteractiveSegment, Point, Mask, Data }
 import {InteractiveSegment, Segment} from '../components/segment_remove';
-import * as ort from 'onnxruntime-web';
-import * as utils from '@/utils';
 
 const uiBasiclClassName = 'transition-all my-2 rounded-xl px-4 py-2 cursor-pointer outline outline-gray-200 text-left ';
 const uiActiveClassName = 'bg-blue-500 text-white';
@@ -19,11 +17,6 @@ function Popup(text: string, timeout: number = 1000) {
     popup.remove()
   }, timeout)
 }
-
-
-// function Workspace() {
-    
-// }  
 
 export default function Home() {
 
