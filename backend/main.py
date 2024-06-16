@@ -10,10 +10,15 @@ import base64
 from PIL import Image, ImageEnhance
 from io import BytesIO
 import os
+import cv2
+import numpy as np
+
+from fastapi.staticfiles import StaticFiles
+import time
 
 COMFY_URI = "http://127.0.0.1:8188/"
 app = FastAPI()
-
+app.mount("/static", StaticFiles(directory="/Users/vishal/Desktop/hack/MedX/backend/images"), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -51,8 +56,6 @@ def detect(sam_detect: SAMDetect):
 
     # overlay mask on the original image to highlight the detected region
 
-
-
     query_params = {"filename": sam_detect.image_path, "type": "input"}
     fetch_img_res = requests.get(fetch_img_uri, params=query_params)
     fetch_img_bytes = fetch_img_res.content
@@ -61,22 +64,40 @@ def detect(sam_detect: SAMDetect):
     mask_image_rgb = mask_image_r.point(lambda p: p > 128 and 255)
     dull_image = ImageEnhance.Brightness(original_image).enhance(0.3)  
     mask_preview = Image.composite(original_image, dull_image, mask_image_rgb)
-    mask_preview.show()
+    # mask_preview.show()
+    filename1 = str(time.time()) + ".png"
+    filename2 = "images/"+filename1
+    mask_preview.save(filename2)
+    # mask_preview.show()
     mask_preview_base64 = base64.b64encode(mask_preview.tobytes()).decode("utf-8")
 
     original_image.putalpha(mask_image)
-    original_image.save("temp.png")
-    original_image = open("temp.png", "rb")
+
+    # filename = str(time.time()) + ".png"
+    filename = "temp.png"
+    original_image.save(filename)
+    original_image = open(filename, "rb")
     files = {"image": original_image}
     img_upload_res = requests.post(img_upload_uri, files=files)
 
+    # debug 
+    print("mask_preview_base64", mask_preview_base64)
+
+    mask_image_r = np.array(mask_image_r)
+    is_success, im_buff_arr = cv2.imencode('.png', mask_image_r)
+    byte_im = im_buff_arr.tobytes()
+
     res = img_upload_res.json()
-    res["mask_preview"] = mask_preview_base64
+    res["filename"] = filename2
+    bytes = BytesIO(byte_im)
+    print("---------------", bytes)
+    # res["byte_im"] = bytes
+    # res["mask_preview"] = mask_preview_base64
+    # res["binary_mask_preview"] = mask_preview.tobytes()
     return res
     
 
-
-@app.post("/output")
+@app.get("/output")
 def get_output(workflow_json: dict, image_path: str):
     prompt_uri = COMFY_URI + "prompt"
     COMFY_OUTPUT_LOCATION = "/Users/vishal/Desktop/hack/ComfyUI/output"

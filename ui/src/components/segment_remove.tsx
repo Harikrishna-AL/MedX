@@ -1,5 +1,5 @@
-import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect, use } from 'react';
-import { FaUpload } from 'react-icons/fa';
+import React, { useState, ChangeEvent, useEffect, useRef } from "react";
+import { FaUpload } from "react-icons/fa";
 
 type Point = { x: number; y: number };
 type CanvasData = {
@@ -9,18 +9,19 @@ type CanvasData = {
   imagePath: string;
 };
 
-const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; test: string;
-  setTest: React.Dispatch<React.SetStateAction<string>>;}> = ({ points, setPoints, test, setTest}) => {
+const InteractiveSegment: React.FC<{
+  points: Point[];
+  setPoints: React.Dispatch<React.SetStateAction<Point[]>>;
+  test: string;
+  setTest: React.Dispatch<React.SetStateAction<string>>;
+}> = ({ points, setPoints, test, setTest }) => {
   const [confidence, setConfidence] = useState(0.92);
-
-  const [fileName, setFileName] = useState<string>('');
-
+  const [fileName, setFileName] = useState<string>("");
   useEffect(() => {
-    setFileName(localStorage.getItem("fileName") || '');
-  },[test]);
+    setFileName(localStorage.getItem("fileName") || "");
+  }, [test]);
 
   const handleSegment = async (threshold: number) => {
-
     const positivePoints = points.map((point) => [point.x, point.y]);
     const requestBody = {
       image_path: fileName,
@@ -28,32 +29,39 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
       negative_points: [],
       threshold,
     };
-    console.log('Segmentation request:', requestBody);
+    console.log("Segmentation request:", requestBody);
     try {
-      const response = await fetch('http://0.0.0.0:8000/sam/detect', {
-        method: 'POST',
+      const response = await fetch("http://0.0.0.0:8000/sam/detect", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        throw new Error('Segmentation API call failed');
+        throw new Error("Segmentation API call failed");
       }
 
       const data = await response.json();
-      // const maskPath = `/Users/vishal/Desktop/hack/ComfyUI/input/${data.image_path}`;
+      // const img = new Image();
+      // img.onload = () => {
+      //   setCanvasData((prevCanvasData) => ({
+      //     ...prevCanvasData,
+      //     image: img,
+      //     imagePath: data.name
+      //   }));
+      //   setOriginalImageSize({ width: img.width, height: img.height });
+      //   console.log('Image loaded');
+      // };
+      // img.src = `data:image/jpeg;base64,${data.mask_preview}`;
 
-      console.log('Segmentation response:', data.name);
-
-      // Store the image path in the fileName state
       setFileName(data.name);
-      console.log(fileName);
-      localStorage.setItem("fileName", fileName);
+      localStorage.setItem("fileName", data.name);
+
       setTest(data.name);
     } catch (error) {
-      console.error('Error during segmentation:', error);
+      console.error("Error during segmentation:", error);
     }
   };
 
@@ -82,68 +90,125 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
   );
 };
 
-const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; test: string;
-  setTest: React.Dispatch<React.SetStateAction<string>>;}> = ({ points, setPoints, test, setTest}) => {
-  const [canvasData, setCanvasData] = useState<CanvasData>({ canvas: null, image: null, size: { width: 0, height: 0 }, imagePath: '' });
+const Segment: React.FC<{
+  points: Point[];
+  setPoints: React.Dispatch<React.SetStateAction<Point[]>>;
+  test: string;
+  setTest: React.Dispatch<React.SetStateAction<string>>;
+}> = ({ points, setPoints, test, setTest }) => {
+  const [canvasData, setCanvasData] = useState<CanvasData>({
+    canvas: null,
+    image: null,
+    size: { width: 0, height: 0 },
+    imagePath: "",
+  });
   const [outputImage, setOutputImage] = useState<string | null>(null);
-  const [originalImageSize, setOriginalImageSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
-  const [fileName, setFileName] = useState<string>('');
+  const [originalImageSize, setOriginalImageSize] = useState<{
+    width: number;
+    height: number;
+  }>({ width: 0, height: 0 });
+  const [fileName, setFileName] = useState<string>("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [confidence, setConfidence] = useState(0.92);
+
+  const [outImage, setOutImage] = useState<string | null>(null);
 
   useEffect(() => {
-    setFileName(localStorage.getItem("fileName") || '');
-  },[test]);
+    setFileName(localStorage.getItem("fileName") || "");
+  }, [test]);
 
+  const handleSegment = async (threshold: number) => {
+    const positivePoints = points.map((point) => [point.x, point.y]);
+    const requestBody = {
+      image_path: fileName,
+      positive_points: positivePoints,
+      negative_points: [],
+      threshold,
+    };
+    console.log("Segmentation request:", requestBody);
+    try {
+      const response = await fetch("http://0.0.0.0:8000/sam/detect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error("Segmentation API call failed");
+      }
+
+      const data = await response.json();
+      
+      console.log("___DEBUG__ Line 144",data);
+
+     
+      
+      setOutImage("http://0.0.0.0:8000/static/" + data.filename);
+      setFileName(data.name);
+      localStorage.setItem("fileName", data.name);
+
+      setTest(data.name);
+    } catch (error) {
+      console.error("Error during segmentation:", error);
+    }
+  };
+
+  useEffect(() => {
+    setFileName(localStorage.getItem("fileName") || "");
+  }, [test]);
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
     if (file) {
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append("image", file);
 
       try {
-        const response = await fetch('http://127.0.0.1:8188/upload/image', {
-          method: 'POST',
+        const response = await fetch("http://127.0.0.1:8188/upload/image", {
+          method: "POST",
           body: formData,
         });
 
         if (!response.ok) {
-          throw new Error('Image upload failed');
+          throw new Error("Image upload failed");
         }
 
         const data = await response.json();
-        let fileName = data.name as string;
-        console.log("Debug __FILE__", fileName);
-        localStorage.setItem("fileName", fileName);
+        const img = new Image();
+        img.onload = () => {
+          setCanvasData((prevData) => ({
+            ...prevData,
+            image: img,
+            imagePath: data.name,
+          }));
+          setOriginalImageSize({ width: img.width, height: img.height });
+          drawImageOnCanvas(img);
+        };
+        img.src = URL.createObjectURL(file);
 
-        if (data && data.type === 'input') {
-          const img = new Image();
-          img.onload = () => {
-            setCanvasData({ ...canvasData, image: img, imagePath: data.name });
-            setOriginalImageSize({ width: img.width, height: img.height });
-          };
-          img.src = URL.createObjectURL(file);
-
-          const prepareResponse = await fetch('http://127.0.0.1:8188/sam/prepare', {
-            method: 'POST',
+        const prepareResponse = await fetch(
+          "http://127.0.0.1:8188/sam/prepare",
+          {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              sam_model_name: 'auto',
+              sam_model_name: "auto",
               filename: data.name,
               subfolder: data.subfolder,
               type: data.type,
             }),
-          });
-
-          if (!prepareResponse.ok) {
-            throw new Error('Prepare API call failed');
           }
+        );
+
+        if (!prepareResponse.ok) {
+          throw new Error("Prepare API call failed");
         }
       } catch (error) {
-        console.error('Error uploading image:', error);
+        console.error("Error uploading image:", error);
       }
     }
   };
@@ -151,7 +216,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   const drawImageOnCanvas = (img: HTMLImageElement) => {
     const canvas = canvasRef.current;
     if (canvas) {
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       if (ctx) {
         const containerWidth = canvas.parentElement?.clientWidth || 0;
         const containerHeight = canvas.parentElement?.clientHeight || 0;
@@ -167,7 +232,11 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
           canvasHeight = canvasWidth / aspectRatio;
         }
 
-        setCanvasData({ ...canvasData, canvas, size: { width: canvasWidth, height: canvasHeight } });
+        setCanvasData((prevCanvasData) => ({
+          ...prevCanvasData,
+          canvas,
+          size: { width: canvasWidth, height: canvasHeight },
+        }));
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
@@ -186,7 +255,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
       const scaleY = originalImageSize.height / size.height;
       const originalX = x * scaleX;
       const originalY = y * scaleY;
-      setPoints(prevPoints => {
+      setPoints((prevPoints) => {
         const newPoints = [...prevPoints, { x: originalX, y: originalY }];
         drawPoints(newPoints);
         return newPoints;
@@ -197,16 +266,16 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   const drawPoints = (pointsToDraw: Point[]) => {
     const { canvas, image, size } = canvasData;
     if (canvas) {
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       if (ctx && image) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(image, 0, 0, size.width, size.height);
-        pointsToDraw.forEach(point => {
+        pointsToDraw.forEach((point) => {
           const scaleX = canvas.width / originalImageSize.width;
           const scaleY = canvas.height / originalImageSize.height;
           const canvasX = point.x * scaleX;
           const canvasY = point.y * scaleY;
-          ctx.fillStyle = 'red';
+          ctx.fillStyle = "red";
           ctx.beginPath();
           ctx.arc(canvasX, canvasY, 5, 0, Math.PI * 2, true);
           ctx.fill();
@@ -217,23 +286,26 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
 
   const handleGenerate = async () => {
     try {
-      const workflowResponse = await fetch('/ComfyUI workflow API (2).json');
+      const workflowResponse = await fetch("/ComfyUI workflow API (2).json");
       if (!workflowResponse.ok) {
-        throw new Error('Failed to load workflow.json');
+        throw new Error("Failed to load workflow.json");
       }
 
       const workflowData = await workflowResponse.json();
 
-      const outputResponse = await fetch(`http://0.0.0.0:8000/output?image_path=${fileName}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(workflowData),
-      });
+      const outputResponse = await fetch(
+        `http://0.0.0.0:8000/output?image_path=${fileName}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(workflowData),
+        }
+      );
 
       if (!outputResponse.ok) {
-        throw new Error('Output API call failed');
+        throw new Error("Output API call failed");
       }
 
       const blob = await outputResponse.blob();
@@ -241,28 +313,33 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
 
       setOutputImage(imageUrl);
 
-      console.log('Output generated successfully');
+      console.log("Output generated successfully");
     } catch (error) {
-      console.error('Error generating output:', error);
+      console.error("Error generating output:", error);
     }
   };
 
   const handleSave = () => {
     if (outputImage) {
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = outputImage;
-      link.download = 'output_image.png';
+      link.download = "output_image.png";
       link.click();
     }
   };
 
   const handleTryAgain = () => {
-    setCanvasData({ canvas: null, image: null, size: { width: 0, height: 0 }, imagePath: '' });
+    setCanvasData({
+      canvas: null,
+      image: null,
+      size: { width: 0, height: 0 },
+      imagePath: "",
+    });
     setOutputImage(null);
     setPoints([]);
     const { canvas } = canvasData;
     if (canvas) {
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
@@ -282,18 +359,47 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
           <div className="text-base font-medium leading-6 text-neutral-700 mb-4">
             Input
           </div>
-          <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
-            {!canvasData.image && (
-              <label className="flex flex-col items-center gap-2 text-gray-700 cursor-pointer">
-                <FaUpload size={48} />
-                <span className="text-lg">Upload an image</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
+          <div className="flex flex-col p-4 bg-white rounded-lg shadow-md">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-gray-700">
+                Confidence
               </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={confidence}
+                onChange={(e) => setConfidence(Number(e.target.value))}
+                className="my-2"
+              />
+              <div className="text-gray-500 text-right">
+                {confidence.toFixed(2)}
+              </div>
+              <button
+                onClick={() => handleSegment(confidence)}
+                className="mt-2 px-4 py-2 text-white rounded-lg bg-neutral-700"
+              >
+                Segment
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
+            {outImage ? (
+              <img src={outImage}/>
+            ) : (
+              !canvasData.image && (
+                <label className="flex flex-col items-center gap-2 text-gray-700 cursor-pointer">
+                  <FaUpload size={48} />
+                  <span className="text-lg">Upload an image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              )
             )}
             {canvasData.image && (
               <canvas
@@ -343,9 +449,8 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
           </button>
         </div>
       </div>
-      {/* <InteractiveSegment points={points} setPoints={setPoints} /> */}
     </div>
   );
-}
+};
 
 export { Segment, InteractiveSegment };
