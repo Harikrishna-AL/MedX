@@ -94,6 +94,7 @@ def get_output(workflow_json: dict, image_path: str):
             detail="Workflow failed to run",
         )
     print("Workflow ran successfully!")
+    time.sleep(1.5)
 
     files = os.listdir(COMFY_OUTPUT_LOCATION)
     files = [f for f in files if f.endswith(".png")]

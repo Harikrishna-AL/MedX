@@ -1,7 +1,7 @@
 {
   "2": {
     "inputs": {
-      "image": "pasted/image (2).png",
+      "image": "clipspace-mask-209106.5.png [temp]",
       "upload": "image"
     },
     "class_type": "LoadImage",
@@ -25,7 +25,7 @@
   "216": {
     "inputs": {
       "mask_threshold": 250,
-      "gaussblur_radius": 8,
+      "gaussblur_radius": 1,
       "invert_mask": false,
       "images": [
         "218",

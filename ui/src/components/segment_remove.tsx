@@ -231,9 +231,17 @@ const Segment: React.FC<{
     }
   };
 
+  const handleUndo = () => {
+    setPoints((prevPoints) => {
+      const newPoints = prevPoints.slice(0, -1);
+      drawPoints(newPoints);
+      return newPoints;
+    });
+  };
+
   const handleGenerate = async () => {
     try {
-      const workflowResponse = await fetch('/ComfyUI workflow API (2).json');
+      const workflowResponse = await fetch('/ComfyUI workflow (1).json');
       if (!workflowResponse.ok) {
         throw new Error('Failed to load workflow.json');
       }
@@ -348,6 +356,12 @@ const Segment: React.FC<{
             className="px-4 py-2 text-neutral-700 rounded-lg bg-zinc-100"
           >
             Try again
+          </button>
+          <button
+            onClick={handleUndo}
+            className="px-4 py-2 text-neutral-700 rounded-lg bg-zinc-100"
+          >
+            Undo
           </button>
         </div>
       </div>
