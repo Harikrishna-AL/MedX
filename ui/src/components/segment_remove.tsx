@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect, use } from 'react';
+import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect } from 'react';
 import { FaUpload } from 'react-icons/fa';
 
 type Point = { x: number; y: number };
@@ -9,18 +9,20 @@ type CanvasData = {
   imagePath: string;
 };
 
-const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; test: string;
-  setTest: React.Dispatch<React.SetStateAction<string>>;}> = ({ points, setPoints, test, setTest}) => {
+const InteractiveSegment: React.FC<{
+  points: Point[];
+  setPoints: React.Dispatch<React.SetStateAction<Point[]>>;
+  test: string;
+  setTest: React.Dispatch<React.SetStateAction<string>>;
+}> = ({ points, setPoints, test, setTest }) => {
   const [confidence, setConfidence] = useState(0.92);
-
   const [fileName, setFileName] = useState<string>('');
 
   useEffect(() => {
-    setFileName(localStorage.getItem("fileName") || '');
-  },[test]);
+    setFileName(localStorage.getItem('fileName') || '');
+  }, [test]);
 
   const handleSegment = async (threshold: number) => {
-
     const positivePoints = points.map((point) => [point.x, point.y]);
     const requestBody = {
       image_path: fileName,
@@ -43,14 +45,14 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
       }
 
       const data = await response.json();
-      // const maskPath = `/Users/vishal/Desktop/hack/ComfyUI/input/${data.image_path}`;
-
       console.log('Segmentation response:', data.name);
 
-      // Store the image path in the fileName state
+      // Store the mask filename and the name in the local storage
+      localStorage.setItem('maskFilename', data.mask_filename);
+      localStorage.setItem('name', data.name);
       setFileName(data.name);
       console.log(fileName);
-      localStorage.setItem("fileName", fileName);
+      localStorage.setItem('fileName', fileName);
       setTest(data.name);
     } catch (error) {
       console.error('Error during segmentation:', error);
@@ -82,8 +84,12 @@ const InteractiveSegment: React.FC<{ points: Point[]; setPoints: React.Dispatch<
   );
 };
 
-const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetStateAction<Point[]>>; test: string;
-  setTest: React.Dispatch<React.SetStateAction<string>>;}> = ({ points, setPoints, test, setTest}) => {
+const Segment: React.FC<{
+  points: Point[];
+  setPoints: React.Dispatch<React.SetStateAction<Point[]>>;
+  test: string;
+  setTest: React.Dispatch<React.SetStateAction<string>>;
+}> = ({ points, setPoints, test, setTest }) => {
   const [canvasData, setCanvasData] = useState<CanvasData>({ canvas: null, image: null, size: { width: 0, height: 0 }, imagePath: '' });
   const [outputImage, setOutputImage] = useState<string | null>(null);
   const [originalImageSize, setOriginalImageSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -91,9 +97,19 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    setFileName(localStorage.getItem("fileName") || '');
-  },[test]);
+    setFileName(localStorage.getItem('fileName') || '');
+  }, [test]);
 
+  useEffect(() => {
+    const maskFilename = localStorage.getItem('maskFilename');
+    if (maskFilename) {
+      const img = new Image();
+      img.onload = () => {
+        drawImageOnCanvas(img);
+      };
+      img.src = `http://localhost:3000/${maskFilename}`;
+    }
+  }, [test]);
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -114,8 +130,8 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
 
         const data = await response.json();
         let fileName = data.name as string;
-        console.log("Debug __FILE__", fileName);
-        localStorage.setItem("fileName", fileName);
+        console.log('Debug __FILE__', fileName);
+        localStorage.setItem('fileName', fileName);
 
         if (data && data.type === 'input') {
           const img = new Image();
@@ -186,7 +202,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
       const scaleY = originalImageSize.height / size.height;
       const originalX = x * scaleX;
       const originalY = y * scaleY;
-      setPoints(prevPoints => {
+      setPoints((prevPoints) => {
         const newPoints = [...prevPoints, { x: originalX, y: originalY }];
         drawPoints(newPoints);
         return newPoints;
@@ -201,7 +217,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
       if (ctx && image) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(image, 0, 0, size.width, size.height);
-        pointsToDraw.forEach(point => {
+        pointsToDraw.forEach((point) => {
           const scaleX = canvas.width / originalImageSize.width;
           const scaleY = canvas.height / originalImageSize.height;
           const canvasX = point.x * scaleX;
@@ -224,7 +240,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
 
       const workflowData = await workflowResponse.json();
 
-      const outputResponse = await fetch(`http://0.0.0.0:8000/output?image_path=${fileName}`, {
+      const outputResponse = await fetch(`http://0.0.0.0:8000/output?image_path=${localStorage.getItem('name')}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -279,9 +295,7 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
     <div className="flex flex-col h-full">
       <div className="flex-grow flex max-md:flex-col gap-4 overflow-y-auto">
         <div className="flex flex-col w-1/2 max-md:w-full h-[calc(100vh-140px)] p-4 bg-white rounded-lg border border-neutral-200">
-          <div className="text-base font-medium leading-6 text-neutral-700 mb-4">
-            Input
-          </div>
+          <div className="text-base font-medium leading-6 text-neutral-700 mb-4">Input</div>
           <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
             {!canvasData.image && (
               <label className="flex flex-col items-center gap-2 text-gray-700 cursor-pointer">
@@ -305,16 +319,10 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
           </div>
         </div>
         <div className="flex flex-col w-1/2 max-md:w-full h-[calc(100vh-140px)] p-4 bg-white rounded-lg border border-neutral-200">
-          <div className="text-base font-medium leading-6 text-neutral-700 mb-4">
-            Output
-          </div>
+          <div className="text-base font-medium leading-6 text-neutral-700 mb-4">Output</div>
           <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
             {outputImage ? (
-              <img
-                src={outputImage}
-                alt="Generated"
-                className="max-h-full max-w-full object-contain"
-              />
+              <img src={outputImage} alt="Generated" className="max-h-full max-w-full object-contain" />
             ) : (
               <div className="text-gray-500">No image generated yet</div>
             )}
@@ -346,6 +354,6 @@ const Segment: React.FC<{ points: Point[]; setPoints: React.Dispatch<React.SetSt
       {/* <InteractiveSegment points={points} setPoints={setPoints} /> */}
     </div>
   );
-}
+};
 
 export { Segment, InteractiveSegment };

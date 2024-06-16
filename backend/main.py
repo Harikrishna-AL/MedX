@@ -10,6 +10,8 @@ import base64
 from PIL import Image, ImageEnhance
 from io import BytesIO
 import os
+import io
+import time
 
 COMFY_URI = "http://127.0.0.1:8188/"
 app = FastAPI()
@@ -49,10 +51,6 @@ def detect(sam_detect: SAMDetect):
     mask_image_r = Image.open(BytesIO(image_bytes)).convert("L")
     mask_image = mask_image_r.point(lambda p: 255 - p)
 
-    # overlay mask on the original image to highlight the detected region
-
-
-
     query_params = {"filename": sam_detect.image_path, "type": "input"}
     fetch_img_res = requests.get(fetch_img_uri, params=query_params)
     fetch_img_bytes = fetch_img_res.content
@@ -61,9 +59,13 @@ def detect(sam_detect: SAMDetect):
     mask_image_rgb = mask_image_r.point(lambda p: p > 128 and 255)
     dull_image = ImageEnhance.Brightness(original_image).enhance(0.3)  
     mask_preview = Image.composite(original_image, dull_image, mask_image_rgb)
-    mask_preview.show()
-    mask_preview_base64 = base64.b64encode(mask_preview.tobytes()).decode("utf-8")
 
+    filename1 = str(time.time()) + ".png"
+    mask_path = "../ui/public/" + filename1
+    mask_preview.save(mask_path)
+
+
+    # mask_preview_base64 = base64.b64encode(mask_preview.tobytes())
     original_image.putalpha(mask_image)
     original_image.save("temp.png")
     original_image = open("temp.png", "rb")
@@ -71,7 +73,7 @@ def detect(sam_detect: SAMDetect):
     img_upload_res = requests.post(img_upload_uri, files=files)
 
     res = img_upload_res.json()
-    res["mask_preview"] = mask_preview_base64
+    res["mask_filename"] = filename1
     return res
     
 
