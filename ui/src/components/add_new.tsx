@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FaUpload } from 'react-icons/fa';
 
 type CustomUploadProps = {
   title: string;
@@ -14,44 +15,48 @@ const CustomUpload = ({ title, onUpload }: CustomUploadProps) => {
     if (file) {
       setLoading(true);
       await onUpload(file);
-      setFileList([file]);
+      setFileList(prevFiles => [...prevFiles, file]);
       setLoading(false);
     }
   };
 
   return (
     <div style={{ marginTop: 20, width: '100%' }}>
-      {loading ? (
-        <div style={{ textAlign: 'center' }}>
+      <label style={{ cursor: 'pointer', display: 'block', textAlign: 'center', padding: 20, border: '1px dashed #ccc' }}>
+        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleUpload} />
+        <p>
+          <FaUpload style={{ marginRight: 8 }} />
+          {title}
+        </p>
+      </label>
+      {loading && (
+        <div style={{ textAlign: 'center', marginTop: 10 }}>
           <span>Loading...</span>
         </div>
-      ) : fileList.length >= 1 ? null : (
-        <label style={{ cursor: 'pointer', display: 'block', textAlign: 'center', padding: 20, border: '1px dashed #ccc' }}>
-          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleUpload} />
-          <p>{title}</p>
-        </label>
       )}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginTop: 20 }}>
+        {fileList.map((file, index) => (
+          <div key={index} style={{ border: '1px solid #ccc', borderRadius: 8, padding: 10, textAlign: 'center' }}>
+            <img src={URL.createObjectURL(file)} alt={file.name} style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8 }} />
+            <p style={{ marginTop: 10, fontSize: 12 }}>{file.name}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
 export function InteractiveAdd() {
-  const uploadLogo = async (file: File): Promise<void> => {
+  const uploadObject = async (file: File): Promise<void> => {
     // Replace with actual upload logic
-    console.log('Uploading logo', file);
-  };
-
-  const uploadProductImage = async (file: File): Promise<void> => {
-    // Replace with actual upload logic
-    console.log('Uploading product image', file);
+    console.log('Uploading object', file);
   };
 
   return (
     <div className="flex flex-col p-4 bg-zinc-100 rounded-lg shadow-md">
       <h3>Assets</h3>
-      <div style={{ display: 'flex'}}>
-        <CustomUpload title="Upload X-ray" onUpload={uploadLogo} />
-        <CustomUpload title="Upload Object" onUpload={uploadProductImage} />
+      <div>
+        <CustomUpload title="Upload Object" onUpload={uploadObject} />
       </div>
     </div>
   );

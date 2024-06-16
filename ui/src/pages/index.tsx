@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { InteractiveSegment, Segment } from '../components/segment_remove';
 import { InteractiveAdd } from '../components/add_new';
+import { PoissonCanvas } from '../components/PoissonCanvas';
 
 type CanvasData = {
   canvas: HTMLCanvasElement | null;
@@ -134,7 +135,7 @@ export default function Home() {
             )}
             {activeSection === 'add' && (
               <div className="flex-wrap justify-between content-between px-4 py-4 mx-12 my-12 text-2xl leading-10 text-black whitespace-nowrap rounded-lg border border-solid border-neutral-200 max-md:mt-10 max-md:max-w-full">
-                <InteractiveAdd />
+                <PoissonCanvas />
               </div>
             )}
             {activeSection === 'history' && (
