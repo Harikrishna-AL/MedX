@@ -22,7 +22,6 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
     size: { width: 0, height: 0 },
     imagePath: '',
   });
-  const [points, setPoints] = useState<Point[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +78,7 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
         cardImage.onload = () => {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(image, 0, 0, size.width, size.height);
-          ctx.drawImage(cardImage, 10, 10, cardImage.width / 2, cardImage.height / 2); // Adjust position and size as needed
+          ctx.drawImage(cardImage, 10, 10, cardImage.width / 2, cardImage.height / 2); 
         };
         cardImage.src = URL.createObjectURL(card);
       }
@@ -96,32 +95,6 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
       const scaleY = canvas.height / canvasData.image!.height;
       const originalX = x * scaleX;
       const originalY = y * scaleY;
-      setPoints(prevPoints => {
-        const newPoints = [...prevPoints, { x: originalX, y: originalY }];
-        drawPoints(newPoints);
-        return newPoints;
-      });
-    }
-  };
-
-  const drawPoints = (pointsToDraw: Point[]) => {
-    const { canvas, image, size } = canvasData;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx && image) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, 0, 0, size.width, size.height);
-        pointsToDraw.forEach(point => {
-          const scaleX = canvas.width / canvasData.image!.width;
-          const scaleY = canvas.height / canvasData.image!.height;
-          const canvasX = point.x * scaleX;
-          const canvasY = point.y * scaleY;
-          ctx.fillStyle = 'red';
-          ctx.beginPath();
-          ctx.arc(canvasX, canvasY, 5, 0, Math.PI * 2, true);
-          ctx.fill();
-        });
-      }
     }
   };
 
