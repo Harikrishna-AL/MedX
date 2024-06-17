@@ -1,3 +1,5 @@
+// components/PoissonCanvas.tsx
+
 import React, { useState, ChangeEvent, MouseEvent, useRef, useEffect } from 'react';
 import { FaUpload } from 'react-icons/fa';
 
@@ -9,7 +11,11 @@ type CanvasData = {
   imagePath: string;
 };
 
-const PoissonCanvas = () => {
+interface DisplayAssets {
+  selectedCard: File | null;
+}
+
+const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
   const [canvasData, setCanvasData] = useState<CanvasData>({
     canvas: null,
     image: null,
@@ -64,6 +70,22 @@ const PoissonCanvas = () => {
     }
   };
 
+  const drawCardOnCanvas = (card: File) => {
+    const { canvas, image, size } = canvasData;
+    if (canvas && image) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const cardImage = new Image();
+        cardImage.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(image, 0, 0, size.width, size.height);
+          ctx.drawImage(cardImage, 10, 10, cardImage.width / 2, cardImage.height / 2); // Adjust position and size as needed
+        };
+        cardImage.src = URL.createObjectURL(card);
+      }
+    }
+  };
+
   const handleCanvasClick = (e: MouseEvent<HTMLCanvasElement>) => {
     const { canvas, size } = canvasData;
     if (canvas) {
@@ -108,6 +130,12 @@ const PoissonCanvas = () => {
       drawImageOnCanvas(canvasData.image);
     }
   }, [canvasData.image]);
+
+  useEffect(() => {
+    if (selectedCard && canvasData.image) {
+      drawCardOnCanvas(selectedCard);
+    }
+  }, [selectedCard, canvasData.image]);
 
   return (
     <div className="flex flex-col h-full">

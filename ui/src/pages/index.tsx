@@ -11,6 +11,7 @@ type CanvasData = {
 };
 
 export default function Home() {
+  const [selectedCard, setSelectedCard] = useState<File | null>(null); // State for currently selected card
   const [activeSection, setActiveSection] = useState<string | null>(null); // State for currently active section
   const [points, setPoints] = useState<{ x: number, y: number }[]>([]);
   const [fileName, setFileName] = useState<{ fileName: string }>({ fileName: '' });
@@ -34,6 +35,10 @@ export default function Home() {
 
   const handleSectionClick = (section: string) => {
     setActiveSection(activeSection === section ? null : section);
+  };
+
+  const handleClick = (card: any) => {
+    setSelectedCard(card);
   };
 
   return (
@@ -103,7 +108,7 @@ export default function Home() {
               </div>
               {activeSection === 'add' && (
                 <div className="mt-2">
-                  <InteractiveAdd/>
+                  <InteractiveAdd onCardClick={handleClick}/>
                 </div>
               )}
               <div className="flex gap-2 justify-center px-4 py-2 mt-7 whitespace-nowrap rounded-lg bg-zinc-100"
@@ -135,7 +140,7 @@ export default function Home() {
             )}
             {activeSection === 'add' && (
               <div className="flex-wrap justify-between content-between px-4 py-4 mx-12 my-12 text-2xl leading-10 text-black whitespace-nowrap rounded-lg border border-solid border-neutral-200 max-md:mt-10 max-md:max-w-full">
-                <PoissonCanvas />
+                <PoissonCanvas selectedCard={selectedCard}/>
               </div>
             )}
             {activeSection === 'history' && (
