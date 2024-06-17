@@ -167,24 +167,22 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
       const snapshotCtx = snapshotCanvas.getContext('2d');
 
       if (snapshotCtx) {
-        snapshotCanvas.width = cardSize.width;
-        snapshotCanvas.height = cardSize.height;
-        
-        snapshotCtx.drawImage(
-          cardImage,
-          0,
-          0,
-          cardSize.width,
-          cardSize.height
-        );
+        snapshotCanvas.width = canvas.width;
+        snapshotCanvas.height = canvas.height;
+
+        snapshotCtx.clearRect(0, 0, snapshotCanvas.width, snapshotCanvas.height);
+
+        if (cardImage) {
+          snapshotCtx.drawImage(cardImage, cardPosition.x, cardPosition.y, cardSize.width, cardSize.height);
+        }
 
         snapshotCanvas.toBlob(async (blob) => {
           if (blob) {
             const formData = new FormData();
-            formData.append('image', blob, 'snapshot.png');
+            formData.append('src_image', blob, 'snapshot.png');
             
             try {
-              const response = await fetch('/upload/blend', {
+              const response = await fetch('http://0.0.0.0:8000/upload/blend', {
                 method: 'POST',
                 body: formData,
               });
@@ -247,12 +245,6 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
                   onMouseLeave={handleCanvasMouseUp}
                   className="border border-neutral-200 max-w-full max-h-full"
                 ></canvas>
-                <button
-                  onClick={handleAddObject}
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Add Object
-                </button>
               </>
             )}
           </div>
@@ -263,6 +255,14 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
             <div className="text-gray-500">No output image generated yet</div>
           </div>
         </div>
+      </div>
+      <div className="flex justify-between py-4 bg-white">
+      <button
+        onClick={handleAddObject}
+        className="px-4 py-2 text-white rounded-lg bg-neutral-700"
+      >
+        Add Object
+      </button>
       </div>
     </div>
   );
