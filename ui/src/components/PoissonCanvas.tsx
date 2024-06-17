@@ -160,6 +160,49 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
     setIsResizing(false);
   };
 
+  const handleAddObject = async () => {
+    const { canvas } = canvasData;
+    if (canvas) {
+      const snapshotCanvas = document.createElement('canvas');
+      const snapshotCtx = snapshotCanvas.getContext('2d');
+
+      if (snapshotCtx) {
+        snapshotCanvas.width = cardSize.width;
+        snapshotCanvas.height = cardSize.height;
+        
+        snapshotCtx.drawImage(
+          cardImage,
+          0,
+          0,
+          cardSize.width,
+          cardSize.height
+        );
+
+        snapshotCanvas.toBlob(async (blob) => {
+          if (blob) {
+            const formData = new FormData();
+            formData.append('image', blob, 'snapshot.png');
+            
+            try {
+              const response = await fetch('/upload/blend', {
+                method: 'POST',
+                body: formData,
+              });
+
+              if (response.ok) {
+                console.log('Snapshot uploaded successfully');
+              } else {
+                console.error('Failed to upload snapshot');
+              }
+            } catch (error) {
+              console.error('Error uploading snapshot:', error);
+            }
+          }
+        }, 'image/png');
+      }
+    }
+  };
+
   useEffect(() => {
     if (canvasData.image) {
       drawImageOnCanvas(canvasData.image);
@@ -195,14 +238,22 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
               </label>
             )}
             {canvasData.image && (
-              <canvas
-                ref={canvasRef}
-                onMouseDown={handleCanvasMouseDown}
-                onMouseMove={handleCanvasMouseMove}
-                onMouseUp={handleCanvasMouseUp}
-                onMouseLeave={handleCanvasMouseUp}
-                className="border border-neutral-200 max-w-full max-h-full"
-              ></canvas>
+              <>
+                <canvas
+                  ref={canvasRef}
+                  onMouseDown={handleCanvasMouseDown}
+                  onMouseMove={handleCanvasMouseMove}
+                  onMouseUp={handleCanvasMouseUp}
+                  onMouseLeave={handleCanvasMouseUp}
+                  className="border border-neutral-200 max-w-full max-h-full"
+                ></canvas>
+                <button
+                  onClick={handleAddObject}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Add Object
+                </button>
+              </>
             )}
           </div>
         </div>

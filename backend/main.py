@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, status, Response
+from fastapi import Depends, FastAPI, HTTPException,UploadFile,  status, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -103,7 +103,16 @@ def get_output(workflow_json: dict, image_path: str):
 
     with open(os.path.join(COMFY_OUTPUT_LOCATION, latest_file), "rb") as f:
         return Response(f.read(), media_type="image/png")
-    
+
+@app.post("/upload/blend")
+def upload_blend(src_image: UploadFile):
+    img = Image.open(BytesIO(src_image.file.read()))
+    img.save("tempsdfasdfasdf.png")
+    # img = open("temp.png", "rb")
+    # files = {"image": img}
+    return {}
+
+
 
 
 if __name__ == "__main__":
