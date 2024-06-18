@@ -4,18 +4,20 @@ import { FaUpload } from 'react-icons/fa';
 type Point = { x: number; y: number };
 type CanvasData = {
   canvas: HTMLCanvasElement | null;
+  backgroundCanvas: HTMLCanvasElement | null;
   image: HTMLImageElement | null;
   size: { width: number; height: number };
   imagePath: string;
 };
 
 interface DisplayAssets {
-  selectedCard: File | null;
+  selectedCard: { file: File; processedImage: string | null } | null;
 }
 
 const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
   const [canvasData, setCanvasData] = useState<CanvasData>({
     canvas: null,
+    backgroundCanvas: null,
     image: null,
     size: { width: 0, height: 0 },
     imagePath: '',
@@ -27,6 +29,7 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [isHoveringResizeHandle, setIsHoveringResizeHandle] = useState(false);
+  const [outputImage, setOutputImage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragOffset = useRef<Point>({ x: 0, y: 0 });
 
@@ -36,8 +39,16 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
     if (file) {
       const img = new Image();
       img.onload = () => {
+        const backgroundCanvas = document.createElement('canvas');
+        backgroundCanvas.width = img.width;
+        backgroundCanvas.height = img.height;
+        const ctx = backgroundCanvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+        }
         setCanvasData({
           ...canvasData,
+          backgroundCanvas,
           image: img,
           size: { width: img.width, height: img.height },
           imagePath: file.name,
@@ -180,15 +191,21 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
           if (blob) {
             const formData = new FormData();
             formData.append('src_image', blob, 'snapshot.png');
-            
+
             try {
-              const response = await fetch('http://0.0.0.0:8000/upload/blend', {
+              const response = await fetch('http://0.0.0.0:8000/blend/upload', {
                 method: 'POST',
                 body: formData,
               });
 
               if (response.ok) {
-                console.log('Snapshot uploaded successfully');
+                const result = await response.json();
+                if (result.success) {
+                  console.log('Snapshot uploaded successfully');
+                  await blendBackgroundImage();
+                } else {
+                  console.error('Failed to upload snapshot');
+                }
               } else {
                 console.error('Failed to upload snapshot');
               }
@@ -198,6 +215,35 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
           }
         }, 'image/png');
       }
+    }
+  };
+
+  const blendBackgroundImage = async () => {
+    const { backgroundCanvas } = canvasData;
+    if (backgroundCanvas) {
+      backgroundCanvas.toBlob(async (blob) => {
+        if (blob) {
+          const formData = new FormData();
+          formData.append('target_image', blob, 'background.png');
+
+          try {
+            const response = await fetch('http://0.0.0.0:8000/blend', {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (response.ok) {
+              const imageBlob = await response.blob();
+              const imageUrl = URL.createObjectURL(imageBlob);
+              setOutputImage(imageUrl);
+            } else {
+              console.error('Failed to blend image');
+            }
+          } catch (error) {
+            console.error('Error blending image:', error);
+          }
+        }
+      }, 'image/png');
     }
   };
 
@@ -212,9 +258,9 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
       const img = new Image();
       img.onload = () => {
         setCardImage(img);
-        setCardSize({ width: img.width / 2, height: img.height / 2 }); // Set initial size
+        setCardSize({ width: img.width / 2, height: img.height / 2 });
       };
-      img.src = URL.createObjectURL(selectedCard);
+      img.src = selectedCard.processedImage || '';
     }
   }, [selectedCard]);
 
@@ -252,17 +298,18 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
         <div className="flex flex-col w-1/2 max-md:w-full h-[calc(100vh-140px)] p-4 bg-white rounded-lg border border-neutral-200">
           <div className="text-base font-medium leading-6 text-neutral-700 mb-4">Output</div>
           <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
-            <div className="text-gray-500">No output image generated yet</div>
+            {outputImage ? (
+              <img src={outputImage} alt="Output" className="max-w-full max-h-full" />
+            ) : (
+              <div className="text-gray-500">No output image generated yet</div>
+            )}
           </div>
         </div>
       </div>
       <div className="flex justify-between py-4 bg-white">
-      <button
-        onClick={handleAddObject}
-        className="px-4 py-2 text-white rounded-lg bg-neutral-700"
-      >
-        Add Object
-      </button>
+        <button onClick={handleAddObject} className="px-4 py-2 text-white rounded-lg bg-neutral-700">
+          Add Object
+        </button>
       </div>
     </div>
   );

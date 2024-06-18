@@ -11,7 +11,7 @@ type CanvasData = {
 };
 
 export default function Home() {
-  const [selectedCard, setSelectedCard] = useState<File | null>(null); // State for currently selected card
+  const [selectedCard, setSelectedCard] = useState<{file: File, processedImage: string | null} | null>(null); // State for currently selected card
   const [activeSection, setActiveSection] = useState<string | null>(null); // State for currently active section
   const [points, setPoints] = useState<{ x: number, y: number }[]>([]);
   const [fileName, setFileName] = useState<{ fileName: string }>({ fileName: '' });
