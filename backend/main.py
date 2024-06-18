@@ -235,13 +235,11 @@ def poisson_blend(target_image: UploadFile):
     # print(source_image.shape, target_image.shape, source_mask.shape)
     poisson_blend_image = poisson_edit(source_image, target_image, source_mask, (0, 0))
     output_binary = io.BytesIO()
-  
+
     is_success, buffer = cv2.imencode(".png", poisson_blend_image)
     output_binary.write(buffer.tobytes())
     output_binary.seek(0)
     return StreamingResponse(output_binary, media_type="image/png")
-
-    
 
 
 @app.post("/removebackground")

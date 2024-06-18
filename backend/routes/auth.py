@@ -1,7 +1,7 @@
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, File, UploadFile
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -19,6 +19,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 client = MongoClient("mongodb://localhost:27017/")
 db = client["mydatabase"]
 users_collection = db["users"]
+images_collection = db["images"]
 
 
 class Token(BaseModel):
@@ -54,6 +55,19 @@ class UserCreate(BaseModel):
     username: str
     password: str
     email: Optional[str] = None
+
+
+class ImageStoreResponse(BaseModel):
+    id: str
+    filename: str
+    username: str
+
+
+class ImageResponse(BaseModel):
+    id: str
+    filename: str
+    username: str
+    content: str
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -153,7 +167,9 @@ async def create_user(user: UserCreate):
 
     hashed_password = get_password_hash(user.password)
 
-    user_in_db = UserInDB(username=user.username, email= user.email, hashed_password=hashed_password)
+    user_in_db = UserInDB(
+        username=user.username, email=user.email, hashed_password=hashed_password
+    )
     users_collection.insert_one(user_in_db.model_dump())
 
     return user_in_db
@@ -167,3 +183,49 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)):
 @router.get("/users/me/items")
 async def read_own_items(current_user: User = Depends(get_current_active_user)):
     return [{"item_id": 1, "owner": current_user}]
+
+
+@router.post("/upload-image", response_model=ImageStoreResponse)
+async def upload_image(
+    file: UploadFile = File(...), current_user: dict = Depends(get_current_user)
+):
+    # Read the file contents
+    import base64
+
+    file_contents = await file.read()
+    file_contents_base64 = base64.b64encode(file_contents).decode("utf-8")
+    print(current_user)
+    # Store the file in the MongoDB database
+    image_data = {
+        "filename": file.filename,
+        "content": file_contents_base64,
+        "username": current_user.username,
+    }
+    result = images_collection.insert_one(image_data)
+
+    # Return the response with the file ID, filename, and user ID
+    return ImageStoreResponse(
+        id=str(result.inserted_id),
+        filename=file.filename,
+        username=current_user.username,
+    )
+
+
+@router.get("/images", response_model=List[ImageResponse])
+async def get_user_images(current_user: dict = Depends(get_current_user)):
+    username = current_user.username
+    images = images_collection.find({"username": username})
+
+    # Convert MongoDB documents to ImageResponse
+    user_images = []
+    for image in images:
+        user_images.append(
+            ImageResponse(
+                id=str(image["_id"]),
+                filename=image["filename"],
+                username=image["username"],
+                content=image["content"],
+            )
+        )
+
+    return user_images
