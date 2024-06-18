@@ -48,7 +48,7 @@ export default function Home() {
           MedX
         </div>
         <div className="flex gap-5 justify-between">
-          <div className="flex gap-3">
+          {/* <div className="flex gap-3">
             <div className="flex justify-center items-center px-4 py-2 rounded-lg bg-zinc-100">
               <img
                 loading="lazy"
@@ -62,11 +62,11 @@ export default function Home() {
             <div className="justify-center px-4 py-2 text-base font-medium leading-6 text-white whitespace-nowrap bg-black rounded-lg">
               Share
             </div>
-          </div>
+          </div> */}
           <div className="flex gap-2">
             <img
               loading="lazy"
-              srcSet="..."
+              srcSet="/assets/default_pfp.png"
               className="shrink-0 w-10 aspect-square"
             />
             <img
@@ -88,7 +88,7 @@ export default function Home() {
                 <img
                   loading="lazy"
                   src="https://cdn.builder.io/api/v1/image/assets/TEMP/89977c1d4ef13da42929ab430c40ed8fa7255aa2c08e82955f35a155d596d710?"
-                  className="shrink-0 w-6 aspect-square"
+                  className={`shrink-0 w-6 aspect-square ${ activeSection === 'segment' ? 'rotate-90' : '' }`}
                 />
               </div>
               {activeSection === 'segment' && (
@@ -103,7 +103,7 @@ export default function Home() {
                 <img
                   loading="lazy"
                   src="https://cdn.builder.io/api/v1/image/assets/TEMP/89977c1d4ef13da42929ab430c40ed8fa7255aa2c08e82955f35a155d596d710?"
-                  className="shrink-0 w-6 aspect-square"
+                  className={`shrink-0 w-6 aspect-square ${activeSection === 'add' ? 'rotate-90' : ''}`}
                 />
               </div>
               {activeSection === 'add' && (
