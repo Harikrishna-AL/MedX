@@ -30,6 +30,7 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
   const [isSelected, setIsSelected] = useState(false);
   const [isHoveringResizeHandle, setIsHoveringResizeHandle] = useState(false);
   const [outputImage, setOutputImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false); // Loading state
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragOffset = useRef<Point>({ x: 0, y: 0 });
 
@@ -193,6 +194,7 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
             formData.append('src_image', blob, 'snapshot.png');
 
             try {
+              setLoading(true); // Start loading
               const response = await fetch('http://0.0.0.0:8000/blend/upload', {
                 method: 'POST',
                 body: formData,
@@ -211,6 +213,8 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
               }
             } catch (error) {
               console.error('Error uploading snapshot:', error);
+            } finally {
+              setLoading(false); // End loading
             }
           }
         }, 'image/png');
@@ -227,6 +231,7 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
           formData.append('target_image', blob, 'background.png');
 
           try {
+            setLoading(true); // Start loading
             const response = await fetch('http://0.0.0.0:8000/blend', {
               method: 'POST',
               body: formData,
@@ -241,6 +246,8 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
             }
           } catch (error) {
             console.error('Error blending image:', error);
+          } finally {
+            setLoading(false); // End loading
           }
         }
       }, 'image/png');
@@ -298,10 +305,14 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
         <div className="flex flex-col w-1/2 max-md:w-full h-[calc(100vh-140px)] p-4 bg-white rounded-lg border border-neutral-200">
           <div className="text-base font-medium leading-6 text-neutral-700 mb-4">Output</div>
           <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
-            {outputImage ? (
-              <img src={outputImage} alt="Output" className="max-w-full max-h-full" />
+            {loading ? (
+              <div className="spinner"></div>
             ) : (
-              <div className="text-gray-500">No output image generated yet</div>
+              outputImage ? (
+                <img src={outputImage} alt="Output" className="max-w-full max-h-full" />
+              ) : (
+                <div className="text-gray-500">No output image generated yet</div>
+              )
             )}
           </div>
         </div>

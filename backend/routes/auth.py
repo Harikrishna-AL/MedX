@@ -32,7 +32,7 @@ class TokenData(BaseModel):
 
 class User(BaseModel):
     username: str
-    email: str = None
+    email: str
     full_name: str = None
     disabled: bool = None
 
@@ -53,6 +53,7 @@ class UserData(BaseModel):
 class UserCreate(BaseModel):
     username: str
     password: str
+    email: Optional[str] = None
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -152,8 +153,8 @@ async def create_user(user: UserCreate):
 
     hashed_password = get_password_hash(user.password)
 
-    user_in_db = UserInDB(username=user.username, hashed_password=hashed_password)
-    users_collection.insert_one(user_in_db.dict())
+    user_in_db = UserInDB(username=user.username, email= user.email, hashed_password=hashed_password)
+    users_collection.insert_one(user_in_db.model_dump())
 
     return user_in_db
 

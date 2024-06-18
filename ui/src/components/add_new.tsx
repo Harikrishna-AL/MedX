@@ -1,7 +1,8 @@
 // React code
 import axios from 'axios';
 import React, { useState, useRef } from 'react';
-import { FaUpload, FaSpinner } from 'react-icons/fa';
+import { FaUpload } from 'react-icons/fa';
+import LoadingSpinner from './LoadingSpinner';
 
 interface CustomUploadProps {
   title: string;
@@ -9,22 +10,18 @@ interface CustomUploadProps {
   onCardClick?: (card: { file: File; processedImage: string | null }) => void;
 }
 
-interface CardListProps {
-  onCardClick: (card: { file: File; processedImage: string | null }) => void;
-}
-
-const CustomUpload: React.FC<CustomUploadProps> = ({ title, onUpload, onCardClick }: CustomUploadProps) => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [fileList, setFileList] = useState<{ file: File; processedImage: string | null }[]>([]);
+const CustomUpload: React.FC<CustomUploadProps> = ({ title, onUpload, onCardClick }) => {
+  const [fileList, setFileList] = useState<{ file: File; processedImage: string | null; loading: boolean }[]>([]);
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setLoading(true);
-      const formData = new FormData();
-      formData.append('seg_image', file);
-
+      setFileList(prevFiles => [...prevFiles, { file, processedImage: null, loading: true }]);
+      
       try {
+        const formData = new FormData();
+        formData.append('seg_image', file);
+  
         const response = await axios.post('http://0.0.0.0:8000/removebackground', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -33,11 +30,14 @@ const CustomUpload: React.FC<CustomUploadProps> = ({ title, onUpload, onCardClic
         });
 
         const processedImage = URL.createObjectURL(response.data);
-        setFileList(prevFiles => [...prevFiles, { file, processedImage }]);
+        setFileList(prevFiles =>
+          prevFiles.map(f => f.file === file ? { ...f, processedImage, loading: false } : f)
+        );
       } catch (error) {
         console.error('Error removing background:', error);
-      } finally {
-        setLoading(false);
+        setFileList(prevFiles =>
+          prevFiles.map(f => f.file === file ? { ...f, loading: false } : f)
+        );
       }
     }
   };
@@ -47,7 +47,6 @@ const CustomUpload: React.FC<CustomUploadProps> = ({ title, onUpload, onCardClic
       onCardClick(card);
     }
   };
-
 
   return (
     <div style={{ marginTop: 20, width: '100%' }}>
@@ -59,18 +58,18 @@ const CustomUpload: React.FC<CustomUploadProps> = ({ title, onUpload, onCardClic
         </p>
       </label>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginTop: 20 }}>
-        {fileList.map(({ file, processedImage }, index) => (
+        {fileList.map(({ file, processedImage, loading }, index) => (
           <div
             key={index}
             style={{ border: '1px solid #ccc', borderRadius: 8, padding: 10, textAlign: 'center' }}
             onClick={() => handleClick({ file, processedImage })}
           >
-            {processedImage ? (
-              <img src={processedImage} alt={file.name} style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8 }} />
+            {loading ? (
+              <LoadingSpinner />
             ) : (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
-                <FaSpinner className="animate-spin" />
-              </div>
+              processedImage && (
+                <img src={processedImage} alt={file.name} style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8 }} />
+              )
             )}
             <p style={{ marginTop: 10, fontSize: 12 }}>{file.name}</p>
           </div>
@@ -80,6 +79,12 @@ const CustomUpload: React.FC<CustomUploadProps> = ({ title, onUpload, onCardClic
   );
 };
 
+
+
+
+interface CardListProps {
+  onCardClick: (card: { file: File; processedImage: string | null }) => void;
+}
 
 export function InteractiveAdd({ onCardClick }: CardListProps): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -112,21 +117,19 @@ export function InteractiveAdd({ onCardClick }: CardListProps): JSX.Element {
     }
   };
 
-  const handleCardClick = (file: File) => {
-    uploadObject(file);
-  };
-
   return (
     <div className="flex flex-col p-4 bg-zinc-100 rounded-lg shadow-md">
       <h3>Assets</h3>
       <div>
-        <CustomUpload title="Upload Object" onUpload={uploadObject}  onCardClick={(card) => {
+        <CustomUpload
+          title="Upload Object"
+          onUpload={uploadObject}
+          onCardClick={(card) => {
             if (card.processedImage) {
               onCardClick(card);
             }
-          }
-        }
- />
+          }}
+        />
       </div>
       <canvas ref={canvasRef} style={{ marginTop: 20, border: '1px solid #ccc' }}></canvas>
     </div>
