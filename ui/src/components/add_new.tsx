@@ -131,7 +131,7 @@ export function InteractiveAdd({ onCardClick }: CardListProps): JSX.Element {
           }}
         />
       </div>
-      <canvas ref={canvasRef} style={{ marginTop: 20, border: '1px solid #ccc' }}></canvas>
+    
     </div>
   );
 }
