@@ -241,6 +241,23 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
               const imageBlob = await response.blob();
               const imageUrl = URL.createObjectURL(imageBlob);
               setOutputImage(imageUrl);
+              const out_file = new File([imageBlob], 'output.png', { type: 'image/png' });
+              const out_image_form = new FormData();
+              out_image_form.append('file' , out_file);
+              const out_res = await fetch('http://0.0.0.0:8000/upload-image?type=add', {
+                method: 'POST',
+                headers: {
+                  'Accept': '*/*',
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: out_image_form,
+              });
+              if (out_res.ok) {
+                console.log('Image uploaded successfully');
+              } else {
+                console.error('Failed to upload Output');
+              }
+
             } else {
               console.error('Failed to blend image');
             }

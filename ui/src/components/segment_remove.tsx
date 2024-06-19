@@ -266,6 +266,23 @@ const Segment: React.FC<{
       setOutputImage(imageUrl);
 
       console.log('Output generated successfully');
+
+      const out_file = new File([blob], 'output_image.png', { type: 'image/png' });
+      const formData_out = new FormData();
+      formData_out.append('file', out_file);
+      const out_res = await fetch('http://0.0.0.0:8000/upload-image?type=remove', {
+        method: 'POST',
+        headers: {
+          'Accept': '*/*',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData_out,
+      });
+      if (out_res.ok) {
+        console.log('Image uploaded successfully');
+      } else {
+        console.error('Failed to upload Output');
+      }
     } catch (error) {
       console.error('Error generating output:', error);
     }

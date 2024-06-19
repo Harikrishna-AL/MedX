@@ -61,6 +61,7 @@ class ImageStoreResponse(BaseModel):
     id: str
     filename: str
     username: str
+    type: str
 
 
 class ImageResponse(BaseModel):
@@ -68,6 +69,7 @@ class ImageResponse(BaseModel):
     filename: str
     username: str
     content: str
+    type: str
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -187,7 +189,7 @@ async def read_own_items(current_user: User = Depends(get_current_active_user)):
 
 @router.post("/upload-image", response_model=ImageStoreResponse)
 async def upload_image(
-    file: UploadFile = File(...), current_user: dict = Depends(get_current_user)
+    file: UploadFile = File(...), current_user: dict = Depends(get_current_user), type: str = None
 ):
     # Read the file contents
     import base64
@@ -200,6 +202,7 @@ async def upload_image(
         "filename": file.filename,
         "content": file_contents_base64,
         "username": current_user.username,
+        "type": type,
     }
     result = images_collection.insert_one(image_data)
 
@@ -208,6 +211,7 @@ async def upload_image(
         id=str(result.inserted_id),
         filename=file.filename,
         username=current_user.username,
+        type = type
     )
 
 
@@ -216,7 +220,6 @@ async def get_user_images(current_user: dict = Depends(get_current_user)):
     username = current_user.username
     images = images_collection.find({"username": username})
 
-    # Convert MongoDB documents to ImageResponse
     user_images = []
     for image in images:
         user_images.append(
@@ -225,6 +228,7 @@ async def get_user_images(current_user: dict = Depends(get_current_user)):
                 filename=image["filename"],
                 username=image["username"],
                 content=image["content"],
+                type=image["type"]
             )
         )
 

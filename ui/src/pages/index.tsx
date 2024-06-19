@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { InteractiveSegment, Segment } from '../components/segment_remove';
 import { InteractiveAdd } from '../components/add_new';
 import { PoissonCanvas } from '../components/PoissonCanvas';
+import History from '../components/History';
 
 type CanvasData = {
   canvas: HTMLCanvasElement | null;
@@ -48,21 +49,6 @@ export default function Home() {
           MedX
         </div>
         <div className="flex gap-5 justify-between">
-          {/* <div className="flex gap-3">
-            <div className="flex justify-center items-center px-4 py-2 rounded-lg bg-zinc-100">
-              <img
-                loading="lazy"
-                src="https://cdn.builder.io/api/v1/image/assets/TEMP/8d63a5fc2c5586a61568dadfd60e7fcc434fcc26de3d8c0acfaf3a36beb5dbc5?"
-                className="w-6 aspect-square"
-              />
-            </div>
-            <div className="justify-center px-4 py-2 text-base font-medium leading-6 text-black whitespace-nowrap rounded-lg bg-zinc-100">
-              Button
-            </div>
-            <div className="justify-center px-4 py-2 text-base font-medium leading-6 text-white whitespace-nowrap bg-black rounded-lg">
-              Share
-            </div>
-          </div> */}
           <div className="flex gap-2">
             <img
               loading="lazy"
@@ -144,8 +130,8 @@ export default function Home() {
               </div>
             )}
             {activeSection === 'history' && (
-              <div className="flex-wrap justify-between content-between px-4 py-4 mx-12 my-12 text-2xl leading-10 text-black whitespace-nowrap rounded-lg border border-solid border-neutral-200 max-md:mt-10 max-md:max-w-full">
-                History Content
+              <div className="flex flex-col">
+                <History />
               </div>
             )}
             {!activeSection && (
@@ -155,7 +141,6 @@ export default function Home() {
                 Content here
                 <br />
                 <br />  
-                
               </div>
             )}
           </div>
