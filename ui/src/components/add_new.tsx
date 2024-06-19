@@ -50,18 +50,35 @@ const CustomUpload: React.FC<CustomUploadProps> = ({ title, onUpload, onCardClic
 
   return (
     <div style={{ marginTop: 20, width: '100%' }}>
-      <label style={{ cursor: 'pointer', display: 'block', textAlign: 'center', padding: 20, border: '1px dashed #ccc' }}>
-        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleUpload} />
-        <p>
+      <label style={{ cursor: 'pointer', 
+                      display: 'block', 
+                      textAlign: 'center', 
+                      padding: 20,  
+                      border: '1px dashed #526F90', 
+                      borderRadius: 8
+                    }}>
+        <input 
+              type="file" 
+              accept="image/*" 
+              style={{ display: 'none' }} 
+              onChange={handleUpload} 
+        />
+        <div style={{ display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center' 
+                    }}>
           <FaUpload style={{ marginRight: 8 }} />
-          {title}
-        </p>
+            <span>{title}</span>
+          </div>
       </label>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginTop: 20 }}>
+      <div style={{ display: 'grid', 
+                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                    gap: 10, 
+                    marginTop: 20 }}>
         {fileList.map(({ file, processedImage, loading }, index) => (
           <div
             key={index}
-            style={{ border: '1px solid #ccc', borderRadius: 8, padding: 10, textAlign: 'center' }}
+            style={{ border: '1px solid #526F90', borderRadius: 8, padding: 10, textAlign: 'center' }}
             onClick={() => handleClick({ file, processedImage })}
           >
             {loading ? (
@@ -118,7 +135,7 @@ export function InteractiveAdd({ onCardClick }: CardListProps): JSX.Element {
   };
 
   return (
-    <div className="flex flex-col p-4 bg-zinc-100 rounded-lg shadow-md">
+    <div className="flex flex-col p-4 bg-blue-100 rounded-lg shadow-md">
       <h3>Assets</h3>
       <div>
         <CustomUpload

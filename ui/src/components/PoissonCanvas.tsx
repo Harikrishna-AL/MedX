@@ -293,53 +293,68 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
   }, [cardImage, cardPosition, cardSize, isSelected]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-grow flex max-md:flex-col gap-4 overflow-y-auto">
-        <div className="flex flex-col w-1/2 max-md:w-full h-[calc(100vh-140px)] p-4 bg-white rounded-lg border border-neutral-200">
-          <div className="text-base font-medium leading-6 text-neutral-700 mb-4">Input</div>
-          <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
-            {!canvasData.image && (
-              <label className="flex flex-col items-center gap-2 text-gray-700 cursor-pointer">
-                <FaUpload size={48} />
-                <span className="text-lg">Upload an image</span>
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-              </label>
-            )}
-            {canvasData.image && (
-              <>
-                <canvas
-                  ref={canvasRef}
-                  onMouseDown={handleCanvasMouseDown}
-                  onMouseMove={handleCanvasMouseMove}
-                  onMouseUp={handleCanvasMouseUp}
-                  onMouseLeave={handleCanvasMouseUp}
-                  className="border border-neutral-200 max-w-full max-h-full"
-                ></canvas>
-              </>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-col w-1/2 max-md:w-full h-[calc(100vh-140px)] p-4 bg-white rounded-lg border border-neutral-200">
-          <div className="text-base font-medium leading-6 text-neutral-700 mb-4">Output</div>
-          <div className="flex flex-col justify-center items-center h-full bg-neutral-100 rounded-lg border border-neutral-200">
-            {loading ? (
-              <div className="spinner"></div>
-            ) : (
-              outputImage ? (
-                <img src={outputImage} alt="Output" className="max-w-full max-h-full" />
-              ) : (
-                <div className="text-gray-500">No output image generated yet</div>
-              )
-            )}
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex flex-col grow mt-12 max-md:mt-10 max-md:max-w-full">
+        <div className="px-8 pt-6 bg-white max-md:px-5 max-md:max-w-full">
+          <div className="flex gap-3 max-md:flex-col max-md:gap-0">
+            <div className="flex flex-col w-6/12 max-md:w-full h-[calc(100vh-220px)]">
+              <div className="flex flex-col grow py-1 max-md:mt-10 max-md:max-w-full">
+                <div className="text-3xl font-medium leading-10 text-ellipsis text-slate-700 max-md:max-w-full">
+                  Input
+                </div>
+                <div className="flex flex-col justify-center items-center h-full mt-6 text-2xl leading-8 rounded-lg border border-solid bg-slate-100 border-neutral-200 text-zinc-500 max-md:pb-10 max-md:pl-5 max-md:max-w-full">
+                  {!canvasData.image && (
+                    <label className="flex flex-col items-center gap-2 text-gray-700 cursor-pointer">
+                      <FaUpload size={48} />
+                      <span className="text-lg">Upload an image</span>
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                  )}
+                  {canvasData.image && (
+                    <>
+                      <canvas
+                        ref={canvasRef}
+                        onMouseDown={handleCanvasMouseDown}
+                        onMouseMove={handleCanvasMouseMove}
+                        onMouseUp={handleCanvasMouseUp}
+                        onMouseLeave={handleCanvasMouseUp}
+                        className="border border-neutral-200 max-w-full max-h-full"
+                      ></canvas>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col w-6/12 max-md:w-full h-[calc(100vh-220px)]">
+              <div className="flex flex-col grow py-1 max-md:mt-10 max-md:max-w-full">
+                <div className="text-3xl font-medium leading-10 text-ellipsis text-slate-700 max-md:max-w-full">
+                  Output
+                </div>
+              <div className="flex justify-center items-center h-full px-6 pt-6 mt-6 text-2xl leading-8 rounded-lg border border-solid bg-slate-100 border-neutral-200 text-zinc-500 max-md:pb-10 max-md:pl-5 max-md:max-w-full">
+                {loading ? (
+                  <div className="spinner"></div>
+                ) : (
+                  outputImage ? (
+                    <img src={outputImage} alt="Output" className="max-w-full max-h-full" />
+                  ) : (
+                    <div className="text-gray-500">No output image generated yet</div>
+                  )
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div className="flex justify-between py-4 bg-white">
-        <button onClick={handleAddObject} className="px-4 py-2 text-white rounded-lg bg-neutral-700">
-          Add Object
-        </button>
+      <div className="flex flex-col px-8 bg-white max-md:px-5">
+        <div className="flex justify-between py-4 bg-white">
+          <button onClick={handleAddObject} className="px-4 py-2 text-white rounded-lg bg-neutral-700">
+            Add Object
+          </button>
+        </div>
       </div>
     </div>
+  </div>
   );
 };
 
