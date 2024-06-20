@@ -52,7 +52,7 @@ export default function Home() {
           <div
             style={{
               backgroundColor: activeSection === 'segment' ? '#D5E5E5' : '#EEEEEE',
-              color: '#334155'
+              color: '#2D3F50'
             }}
             className="flex flex-col justify-center px-4 pt-2 pb-1.5 mt-14 w-full text-base font-medium leading-6 rounded-lg max-md:mt-10 cursor-pointer"
             onClick={() => handleSectionClick('segment')}
@@ -74,7 +74,7 @@ export default function Home() {
           <div
             style={{
               backgroundColor: activeSection === 'add' ? '#D5E5E5' : '#EEEEEE',
-              color: '#334155'
+              color: '#2D3F50'
             }}
             className="flex gap-2 justify-center px-4 py-2 mt-6 text-base font-medium leading-6 rounded-lg bg-zinc-100 text-slate-700 cursor-pointer"
             onClick={() => handleSectionClick('add')}
@@ -94,9 +94,9 @@ export default function Home() {
           <div
             style={{
               backgroundColor: activeSection === 'history' ? '#D5E5E5' : '#EEEEEE',
-              color: '#334155'
+              color: '#2D3F50'
             }}
-            className="flex gap-2 justify-center px-4 py-2 mt-6 text-base font-medium leading-6 whitespace-nowrap rounded-lg bg-zinc-100 text-slate-700 cursor-pointe"
+            className="flex gap-2 justify-center px-4 py-2 mt-6 text-base font-medium leading-6 whitespace-nowrap rounded-lg cursor-pointe"
             onClick={() => handleSectionClick('history')}
           >
             <div className="flex-1 text-ellipsis">History</div>
@@ -106,13 +106,20 @@ export default function Home() {
               className="shrink-0 w-6 aspect-square"
             />
           </div>
-          <div className="flex items-center gap-4 px-4 py-2 mt-auto text-base font-medium leading-6 whitespace-nowrap rounded-lg bg-zinc-100 text-neutral-700 max-md:mt-10">
-            <FaCog className="shrink-0 w-5 h-5" />
+          <div 
+            style={{
+              backgroundColor: activeSection === 'settings' ? '#D5E5E5' : '#EEEEEE',
+              color: '#2D3F50'
+            }}
+            className="flex items-center gap-4 px-4 py-2 mt-auto text-base font-medium leading-6 whitespace-nowrap rounded-lg max-md:mt-10"
+            onClick={() => handleSectionClick('settings')}
+            >
+            <FaCog style={{ color: '#2D3F50' }} className="shrink-0 w-5 h-5" />
               <div className="flex-1 text-ellipsis">Settings</div>
           </div>
         </div>
       </div>
-      <div className="flex flex-col ml-5 w-[85%] max-md:ml-0 max-md:w-full">
+      <div className="flex flex-col w-[85%] max-md:ml-0 max-md:w-full">
         {activeSection === 'segment' && (
           <div className="flex flex-col">
             <Segment points={points} setPoints={setPoints} setTest={setTest} test={test} />
@@ -129,7 +136,7 @@ export default function Home() {
           </div>
         )}
         {!activeSection && (
-          <div className="flex-wrap justify-between content-between px-4 py-4 mx-12 my-12 text-2xl leading-10 text-black whitespace-nowrap rounded-lg border border-solid border-neutral-200 max-md:mt-10 max-md:max-w-full">
+          <div className="flex-wrap justify-between content-between px-4 py-4 mx-12 my-12 text-2xl leading-10 whitespace-nowrap rounded-lg border border-solid border-neutral-200 max-md:mt-10 max-md:max-w-full">
             Instructions:
             <br />
             Content here

@@ -298,15 +298,15 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
         <div className="px-8 pt-6 bg-white max-md:px-5 max-md:max-w-full">
           <div className="flex gap-3 max-md:flex-col max-md:gap-0">
             <div className="flex flex-col w-6/12 max-md:w-full h-[calc(100vh-220px)]">
-              <div className="flex flex-col grow py-1 max-md:mt-10 max-md:max-w-full">
-                <div className="text-3xl font-medium leading-10 text-ellipsis text-slate-700 max-md:max-w-full">
+              <div className="flex flex-col grow py-1 max-md:mt-10 max-md:max-w-full" style={{ marginLeft: '10px'}}>
+                <div style = {{color:'#2D3F50'}} className="text-3xl font-medium leading-10 text-ellipsis max-md:max-w-full">
                   Input
                 </div>
                 <div className="flex flex-col justify-center items-center h-full mt-6 text-2xl leading-8 rounded-lg border border-solid bg-slate-100 border-neutral-200 text-zinc-500 max-md:pb-10 max-md:pl-5 max-md:max-w-full">
                   {!canvasData.image && (
                     <label className="flex flex-col items-center gap-2 text-gray-700 cursor-pointer">
                       <FaUpload size={48} />
-                      <span className="text-lg">Upload an image</span>
+                      <span className="text-lg text-gray-500">Upload an image</span>
                       <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
                   )}
@@ -327,8 +327,8 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
             </div>
 
             <div className="flex flex-col w-6/12 max-md:w-full h-[calc(100vh-220px)]">
-              <div className="flex flex-col grow py-1 max-md:mt-10 max-md:max-w-full">
-                <div className="text-3xl font-medium leading-10 text-ellipsis text-slate-700 max-md:max-w-full">
+              <div className="flex flex-col grow py-1 max-md:mt-10 max-md:max-w-full" style={{ marginLeft: '10px', marginRight: '10px' }}>
+                <div style = {{color:'#2D3F50'}} className="text-3xl font-medium leading-10 text-ellipsis max-md:max-w-full">
                   Output
                 </div>
               <div className="flex justify-center items-center h-full px-6 pt-6 mt-6 text-2xl leading-8 rounded-lg border border-solid bg-slate-100 border-neutral-200 text-zinc-500 max-md:pb-10 max-md:pl-5 max-md:max-w-full">
@@ -338,7 +338,7 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
                   outputImage ? (
                     <img src={outputImage} alt="Output" className="max-w-full max-h-full" />
                   ) : (
-                    <div className="text-gray-500">No output image generated yet</div>
+                    <div className="text-gray-500">No image generated yet</div>
                   )
                 )}
               </div>
@@ -347,8 +347,11 @@ const PoissonCanvas: React.FC<DisplayAssets> = ({ selectedCard }) => {
         </div>
       </div>
       <div className="flex flex-col px-8 bg-white max-md:px-5">
-        <div className="flex justify-between py-4 bg-white">
-          <button onClick={handleAddObject} className="px-4 py-2 text-white rounded-lg bg-neutral-700">
+        <div className="flex justify-between py-4 bg-white" style={{ marginLeft: '10px'}}>
+          <button 
+              onClick={handleAddObject} 
+              style = {{backgroundColor:'#2D3F50'}}
+              className="px-4 py-2 text-white rounded-lg bg-neutral-700">
             Add Object
           </button>
         </div>

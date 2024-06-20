@@ -62,8 +62,8 @@ const InteractiveSegment: React.FC<{
   return (
     <div style={{backgroundColor:'#D5E5E5'}} className="flex flex-col p-4 rounded-lg shadow-md">
       <div className="flex justify-between items-center">
-        <label className="text-sm font-medium text-gray-700">Confidence:</label>
-        <div className="text-gray-500">{confidence.toFixed(2)}</div>
+        <label style={{color:'#2D3F50'}} className="text-sm font-medium text-gray-700">Confidence</label>
+        <div style={{color:'#2D3F50'}} className="text">{confidence.toFixed(2)}</div>
       </div>
         <input
           type="range"
@@ -76,6 +76,7 @@ const InteractiveSegment: React.FC<{
         />
         <button
           onClick={() => handleSegment(confidence)}
+          style = {{backgroundColor:'#2D3F50' }}
           className="ml-2 px-4 py-2 mt-2 text-white rounded-lg bg-neutral-700"
         >
           Segment
@@ -88,8 +89,7 @@ const Segment: React.FC<{
   points: Point[];
   setPoints: React.Dispatch<React.SetStateAction<Point[]>>;
   test: string;
-  setTest: React.Dispatch<React.SetStateAction<string>>;
-}> = ({ points, setPoints, test, setTest }) => {
+  setTest: React.Dispatch<React.SetStateAction<string>>; }> = ({ points, setPoints, test, setTest }) => {
   const [canvasData, setCanvasData] = useState<CanvasData>({ canvas: null, image: null, size: { width: 0, height: 0 }, imagePath: '' });
   const [outputImage, setOutputImage] = useState<string | null>(null);
   const [originalImageSize, setOriginalImageSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -322,8 +322,8 @@ const Segment: React.FC<{
         <div className="px-8 pt-6 bg-white max-md:px-5 max-md:max-w-full">
           <div className="flex gap-3 max-md:flex-col max-md:gap-0">
             <div className="flex flex-col w-6/12 max-md:w-full h-[calc(100vh-220px)]">
-              <div className="flex flex-col grow py-1 max-md:mt-10 max-md:max-w-full">
-                <div className="text-3xl font-medium leading-10 text-ellipsis text-slate-700 max-md:max-w-full">
+              <div className="flex flex-col grow py-1 max-md:mt-10 max-md:max-w-full" style={{ marginLeft: '10px'}}>
+                <div style = {{color:'#2D3F50'}} className="text-3xl font-medium leading-10 text-ellipsis max-md:max-w-full">
                   Input
                 </div>
                 <div className="flex flex-col justify-center items-center h-full mt-6 text-2xl leading-8 rounded-lg border border-solid bg-slate-100 border-neutral-200 text-zinc-500 max-md:pb-10 max-md:pl-5 max-md:max-w-full">
@@ -350,8 +350,8 @@ const Segment: React.FC<{
               </div>
             </div>
             <div className="flex flex-col w-6/12 max-md:w-full h-[calc(100vh-220px)]">
-              <div className="flex flex-col grow py-1 max-md:mt-10 max-md:max-w-full">
-                <div className="text-3xl font-medium leading-10 text-ellipsis text-slate-700 max-md:max-w-full">
+              <div className="flex flex-col grow py-1 max-md:mt-10 max-md:max-w-full" style={{ marginLeft: '10px', marginRight: '10px' }}>
+                <div style = {{color:'#2D3F50'}} className="text-3xl font-medium leading-10 text-ellipsis max-md:max-w-full">
                   Output
                 </div>
                 <div className="flex justify-center items-center h-full px-6 pt-6 mt-6 text-2xl leading-8 rounded-lg border border-solid bg-slate-100 border-neutral-200 text-zinc-500 max-md:pb-10 max-md:pl-5 max-md:max-w-full">
@@ -369,29 +369,33 @@ const Segment: React.FC<{
             </div>
           </div>
         </div>
-        <div className="flex flex-col px-8 bg-white max-md:px-5">
-          <div className="flex justify-between py-4 bg-white">
+        <div className="flex flex-col px-8 bg-white max-md:px-5" >
+          <div className="flex justify-between py-4 bg-white" style={{ marginLeft: '10px'}}>
             <button
               onClick={handleGenerate}
+              style = {{backgroundColor:'#2D3F50'}}
               className="px-4 py-2 text-white rounded-lg bg-neutral-700"
             >
               Generate
             </button>
-            <div className="flex gap-4">
+            <div className="flex gap-4" style={{ marginRight: '10px' }}>
               <button
                 onClick={handleSave}
+                style = {{backgroundColor:'#2D3F50'}}
                 className="px-4 py-2 text-white rounded-lg bg-neutral-700"
               >
                 Save
               </button>
               <button
                 onClick={handleTryAgain}
+                style = {{backgroundColor:'#EEEEEE'}}
                 className="px-4 py-2 rounded-lg bg-zinc-100 text-slate-700"
               >
                 Try again
               </button>
               <button
                 onClick={handleUndo}
+                style = {{backgroundColor:'#EEEEEE'}}
                 className="px-4 py-2 rounded-lg bg-zinc-100 text-slate-700"
               >
                 Undo
