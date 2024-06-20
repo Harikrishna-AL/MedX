@@ -45,36 +45,26 @@ const History = () => {
       <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">History</h1>
       <div className="filter-dropdown relative flex items-center justify-end mb-4">
         <button
-          className="filter-button flex items-center px-4 py-2 rounded-md bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition duration-300"
+          className="filter-button flex items-center px-2 py-1 rounded-md bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition duration-300"
           onClick={() => setDropdownVisible(!dropdownVisible)}
         >
-          <FaFilter className="text-lg mr-2" />
+          <FaFilter className="text-lg mr-1" />
           Filter <IoIosArrowDown className="ml-1" />
         </button>
         {dropdownVisible && (
-          <div className="dropdown-menu absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg">
-            <button
-              className={`dropdown-item w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-200 transition duration-300 ${
-                filterOption === 'remove' ? 'bg-neutral-300' : ''
-              }`}
-              onClick={() => {
-                setFilterOption('remove');
+          <div className="dropdown-menu absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg p-2">
+            <select
+              className="w-full p-2 border rounded-md bg-white text-neutral-700"
+              value={filterOption}
+              onChange={(e) => {
+                setFilterOption(e.target.value as 'remove' | 'add' | '');
                 setDropdownVisible(false);
               }}
             >
-              Remove Object
-            </button>
-            <button
-              className={`dropdown-item w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-200 transition duration-300 ${
-                filterOption === 'add' ? 'bg-neutral-300' : ''
-              }`}
-              onClick={() => {
-                setFilterOption('add');
-                setDropdownVisible(false);
-              }}
-            >
-              Add Object
-            </button>
+              <option value="">Select Filter</option>
+              <option value="remove">Remove Object</option>
+              <option value="add">Add Object</option>
+            </select>
           </div>
         )}
       </div>
