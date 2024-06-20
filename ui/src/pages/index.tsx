@@ -44,13 +44,17 @@ export default function Home() {
 
   return (
     <div className="bg-white min-h-screen flex">
-      <div className="flex flex-col w-1/6 bg-slate-500 border-r border-neutral-200 min-h-screen">
+      <div style={{backgroundColor: '#526F90'}} className="flex flex-col w-[15%] bg-slate-500 min-h-screen">
         <div className="flex flex-col grow px-6 pt-14 pb-9 w-full">
           <div className="text-4xl font-semibold tracking-tight leading-[10px] text-slate-300">
             MedX
           </div>
           <div
-            className={`flex flex-col justify-center px-4 pt-2 pb-1.5 mt-14 w-full text-base font-medium leading-6 rounded-lg bg-zinc-100 text-slate-700 max-md:mt-10 cursor-pointer ${activeSection === 'segment' ? 'bg-blue-100' : 'bg-zinc-100'}`}
+            style={{
+              backgroundColor: activeSection === 'segment' ? '#D5E5E5' : '#EEEEEE',
+              color: '#334155'
+            }}
+            className="flex flex-col justify-center px-4 pt-2 pb-1.5 mt-14 w-full text-base font-medium leading-6 rounded-lg max-md:mt-10 cursor-pointer"
             onClick={() => handleSectionClick('segment')}
           >
             <div className="flex gap-2.5">
@@ -68,7 +72,11 @@ export default function Home() {
             </div>
           )}
           <div
-            className={`flex gap-2 justify-center px-4 py-2 mt-6 text-base font-medium leading-6 rounded-lg bg-zinc-100 text-slate-700 cursor-pointer ${activeSection === 'add' ? 'bg-blue-100' : 'bg-zinc-100'}`}
+            style={{
+              backgroundColor: activeSection === 'add' ? '#D5E5E5' : '#EEEEEE',
+              color: '#334155'
+            }}
+            className="flex gap-2 justify-center px-4 py-2 mt-6 text-base font-medium leading-6 rounded-lg bg-zinc-100 text-slate-700 cursor-pointer"
             onClick={() => handleSectionClick('add')}
           >
             <div className="flex-1 text-ellipsis">Add external object</div>
@@ -84,7 +92,11 @@ export default function Home() {
             </div>
           )}
           <div
-            className={`flex gap-2 justify-center px-4 py-2 mt-6 text-base font-medium leading-6 whitespace-nowrap rounded-lg bg-zinc-100 text-slate-700 cursor-pointe ${activeSection === 'history' ? 'bg-blue-100' : 'bg-zinc-100'}`}
+            style={{
+              backgroundColor: activeSection === 'history' ? '#D5E5E5' : '#EEEEEE',
+              color: '#334155'
+            }}
+            className="flex gap-2 justify-center px-4 py-2 mt-6 text-base font-medium leading-6 whitespace-nowrap rounded-lg bg-zinc-100 text-slate-700 cursor-pointe"
             onClick={() => handleSectionClick('history')}
           >
             <div className="flex-1 text-ellipsis">History</div>
@@ -100,7 +112,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <div className="flex flex-col ml-5 w-5/6 max-md:ml-0 max-md:w-full">
+      <div className="flex flex-col ml-5 w-[85%] max-md:ml-0 max-md:w-full">
         {activeSection === 'segment' && (
           <div className="flex flex-col">
             <Segment points={points} setPoints={setPoints} setTest={setTest} test={test} />

@@ -60,7 +60,7 @@ const InteractiveSegment: React.FC<{
   };
 
   return (
-    <div className="flex flex-col p-4 bg-blue-100 rounded-lg shadow-md">
+    <div style={{backgroundColor:'#D5E5E5'}} className="flex flex-col p-4 rounded-lg shadow-md">
       <div className="flex justify-between items-center">
         <label className="text-sm font-medium text-gray-700">Confidence:</label>
         <div className="text-gray-500">{confidence.toFixed(2)}</div>

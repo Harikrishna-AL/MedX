@@ -49,7 +49,7 @@ const CustomUpload: React.FC<CustomUploadProps> = ({ title, onUpload, onCardClic
   };
 
   return (
-    <div style={{ marginTop: 20, width: '100%' }}>
+    <div style={{ marginTop: 20, width: '100%'}}>
       <label style={{ cursor: 'pointer', 
                       display: 'block', 
                       textAlign: 'center', 
@@ -135,7 +135,8 @@ export function InteractiveAdd({ onCardClick }: CardListProps): JSX.Element {
   };
 
   return (
-    <div className="flex flex-col p-4 bg-blue-100 rounded-lg shadow-md">
+    <div style = {{backgroundColor:'#D5E5E5' }}
+         className="flex flex-col p-4 bg-blue-100 rounded-lg shadow-md">
       <h3>Assets</h3>
       <div>
         <CustomUpload
