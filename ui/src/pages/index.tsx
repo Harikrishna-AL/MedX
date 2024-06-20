@@ -131,7 +131,7 @@ export default function Home() {
           </div>
         )}
         {activeSection === 'history' && (
-          <div className="flex-wrap justify-between content-between px-4 py-4 mx-12 my-12 text-2xl leading-10 text-black whitespace-nowrap rounded-lg border border-solid border-neutral-200 max-md:mt-10 max-md:max-w-full">
+          <div className="flex-wrap justify-between content-between px-4 py-4 mx-12 my-12 text-2xl leading-10 text-black whitespace-nowrap rounded-lg max-md:mt-10 max-md:max-w-full">
             <History />
           </div>
         )}
