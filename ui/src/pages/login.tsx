@@ -69,6 +69,7 @@ export default function Auth() {
             src="/assets/x-rays-of-hand-vector.jpg"
             alt="X-rays of hand"
             className="w-full h-full object-cover"
+            style={{ borderRadius: '50px' }}
           />
         </div>
         <div className="flex flex-col w-1/2 max-md:w-full ml-8">
