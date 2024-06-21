@@ -4,7 +4,7 @@ import { InteractiveSegment, Segment } from '../components/segment_remove';
 import { InteractiveAdd } from '../components/add_new';
 import { PoissonCanvas } from '../components/PoissonCanvas';
 import History from '../components/History';
-import { FaCog } from 'react-icons/fa';
+import { FaCog } from 'react-icons/fa'; 
 
 type CanvasData = {
   canvas: HTMLCanvasElement | null;
@@ -13,12 +13,13 @@ type CanvasData = {
 };
 
 export default function Home() {
-  const [selectedCard, setSelectedCard] = useState<{ file: File, processedImage: string | null } | null>(null);
+  const [selectedCard, setSelectedCard] = useState<{file: File, processedImage: string | null} | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [points, setPoints] = useState<{ x: number, y: number }[]>([]);
   const [test, setTest] = useState<string>('');
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
 
   useEffect(() => {
     const authenticated = localStorage.getItem('authenticated') === 'true';
@@ -30,7 +31,7 @@ export default function Home() {
   }, [router]);
 
   if (!isAuthenticated) {
-    return null;
+    return null; 
   }
 
   const handleSectionClick = (section: string) => {
@@ -43,7 +44,7 @@ export default function Home() {
 
   return (
     <div className="bg-white min-h-screen flex">
-      <div style={{ backgroundColor: '#526F90' }} className="flex flex-col w-[15%] bg-slate-500 min-h-screen">
+      <div style={{backgroundColor: '#526F90'}} className="flex flex-col w-[15%] bg-slate-500 min-h-screen">
         <div className="flex flex-col grow px-6 pt-14 pb-9 w-full">
           <div className="text-4xl font-semibold tracking-tight leading-[10px] text-slate-300">
             MedX
@@ -105,16 +106,16 @@ export default function Home() {
               className="shrink-0 w-6 aspect-square"
             />
           </div>
-          <div
+          <div 
             style={{
               backgroundColor: activeSection === 'settings' ? '#D5E5E5' : '#EEEEEE',
               color: '#2D3F50'
             }}
             className="flex items-center gap-4 px-4 py-2 mt-auto text-base font-medium leading-6 whitespace-nowrap rounded-lg max-md:mt-10"
             onClick={() => handleSectionClick('settings')}
-          >
+            >
             <FaCog style={{ color: '#2D3F50' }} className="shrink-0 w-5 h-5" />
-            <div className="flex-1 text-ellipsis">Settings</div>
+              <div className="flex-1 text-ellipsis">Settings</div>
           </div>
         </div>
       </div>
@@ -135,27 +136,38 @@ export default function Home() {
           </div>
         )}
         {!activeSection && (
-          <div style={{ color: '#2D3F50', fontSize: '0.875rem', padding: '1rem', maxWidth: '90%', margin: '0 auto' }} className="instructions-container border border-solid border-neutral-200 rounded-lg">
-            <h2>Instructions:</h2>
-            <h3>Segment and Remove: Remove Extraneous Objects from X-ray Images</h3>
-            <ol>
-              <li>Click the <strong>"Segment and Remove"</strong> button in the sidebar.</li>
-              <li>Click the <strong>"Upload image"</strong> icon under the <strong>"Input"</strong> section to upload the X-ray image.</li>
-              <li>Once uploaded, click on the object in the X-ray image to select the area to be segmented. Selected points appear as red dots. Click in as many places as needed to mark the area to be segmented.</li>
-              <li>Click the <strong>"Undo"</strong> button if you clicked in the wrong area and want to undo the selection.</li>
-              <li>Select the confidence value from the scrollbar in the sidebar and click the <strong>"Segment"</strong> button.</li>
-              <li>If the displayed section to be segmented is satisfactory, click the <strong>"Generate"</strong> button.</li>
-              <li>Click <strong>"Save"</strong> to save the image, or click <strong>"Try Again"</strong> if you are not satisfied with the result.</li>
-            </ol>
-            <h3>Add External Object: Add and Blend New Objects into an X-ray Image</h3>
-            <ol>
-              <li>Click the <strong>"Add external object"</strong> button in the sidebar.</li>
-              <li>Click the <strong>"Upload image"</strong> icon under the <strong>"Input"</strong> section to upload the X-ray image.</li>
-              <li>Click the <strong>"Upload object"</strong> icon under the <strong>"Assets"</strong> section in the sidebar.</li>
-              <li>Click on the uploaded object to make it appear on the canvas. You can drag, resize, and place the object in the desired position on top of the X-ray image.</li>
-              <li>Click the <strong>"Add object"</strong> button to blend the two images and generate the output.</li>
-            </ol>
+          <div className="flex flex-col flex-grow overflow-hidden">
+          <div className="flex flex-col grow mt-12 max-md:mt-10 max-md:max-w-full">
+            <div className="px-8 pt-6 bg-white max-md:px-5 max-md:max-w-full">
+              <div className="flex flex-col max-md:gap-0 overflow-y-auto">
+                <div className="flex-wrap justify-between content-between px-4 py-4 mx-12 my-12 text-2xl leading-10 whitespace-normal rounded-lg border border-solid border-neutral-200 max-md:mt-10 max-md:max-w-full">
+                  <h2 className="text-4xl mb-4">Welcome</h2>
+                  <br></br>
+                  <p className="text-3xl mb-2"><strong>Instructions:</strong></p>
+                  <h3 className="text-2xl mt-4 mb-2">Segment and Remove: Remove Extraneous Objects from X-ray Images</h3>
+                  <ol className="list-decimal list-inside mb-4">
+                    <li>Click the <strong>"Segment and Remove"</strong> button in the sidebar.</li>
+                    <li>Click the <strong>"Upload image"</strong> icon under the <strong>"Input"</strong> section to upload the X-ray image.</li>
+                    <li>Once uploaded, click on the object in the X-ray image to select the area to be segmented. Selected points appear as red dots. Click in as many places as needed to clearly define the area to be segmented.</li>
+                    <li>Click the <strong>"Undo"</strong> button if you clicked in the wrong area and want to undo the selection.</li>
+                    <li>Select the confidence value from the scrollbar in the sidebar and click the <strong>"Segment"</strong> button.</li>
+                    <li>If the displayed section to be segmented is satisfactory, click the <strong>"Generate"</strong> button.</li>
+                    <li>Click <strong>"Save"</strong> to save the image, or click <strong>"Try Again"</strong> if you are not satisfied with the result.</li>
+                  </ol>
+                  <br></br>
+                  <h3 className="text-2xl mt-4 mb-2">Add External Object: Add and Blend New Objects into an X-ray Image</h3>
+                  <ol className="list-decimal list-inside">
+                    <li>Click the <strong>"Add external object"</strong> button in the sidebar.</li>
+                    <li>Click the <strong>"Upload image"</strong> icon under the <strong>"Input"</strong> section to upload the X-ray image.</li>
+                    <li>Click the <strong>"Upload object"</strong> icon under the <strong>"Assets"</strong> section in the sidebar.</li>
+                    <li>Click on the uploaded object to make it appear on the canvas. You can drag, resize, and place the object in the desired position on top of the X-ray image.</li>
+                    <li>Click the <strong>"Add object"</strong> button to blend the two images and generate the output.</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
         )}
       </div>
     </div>
